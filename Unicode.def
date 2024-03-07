@@ -1,0 +1,111 @@
+(* Copyright (C) 2010
+                 Free Software Foundation, Inc. *)
+(* This file is planned to be part of GNU Modula-2.
+
+GNU Modula-2 is free software; you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free
+Software Foundation; either version 3, or (at your option) any later
+version.
+
+GNU Modula-2 is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+
+You should have received a copy of the GNU General Public License along
+with gm2; see the file COPYING.  If not, write to the Free Software
+Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA. *)
+
+DEFINITION MODULE Unicode ;
+
+(*
+    Title      : Unicode
+    Author     : Chris Lilley
+    System     : UNIX (GNU Modula-2)
+    Date       : 
+    Last edit  : $Date: 2010/10/03 19:01:11 $ 
+    Revision   : $Version$ 
+    Description: provides Unicode base types.
+*)
+
+CONST MaxUnicode = 10FFFFH;  (*maximum Unicode value *)
+
+TYPE
+    UChar;            (* a single Unicode character *)
+    UTF16_codeunit;    (* a single UTF-16 code unit  *)
+
+(* 
+   Uchar can hold any Unicode character. It is not restricted to 
+   the basic Multilinual Plane (BMP). Each Unicode character has 
+   a unique codepoint between 0 and MaxUnicode; this value is
+   published by the Unicode consortium.
+   A Unicode character also has a name, and a set of associated 
+   character properties.
+
+   UTF16_codeunit holds a single code unit as used in Unicode 
+   Transformation Format 16 (UTF16). A codeunit is either a 
+   character in the BMP, a Low Surrogate or a High Surrogate.
+*)
+
+PROCEDURE CharToUChar (c: CHAR): UChar;
+(* 
+   CharToUChar -   converts a single char, c, into a Unicode character.
+                   For GM2, a Modula-2 char is a gcc char which is 8 bits.
+                   The character represented by a CHAR with an ordinal
+                   value greater than 127 depends on the locale.
+                   The size and encoding of a Modula-2 char is undefined 
+                   in both PIM and ISO Modula-2.
+*)
+
+PROCEDURE ASCIIToUChar (a: CHAR): UChar;
+(* 
+   ASCIIToUChar -  converts a single ASCII printable char, a, into 
+                   a Unicode character in the Basic Latin block.
+                   For GM2, a Modula-2 char is a gcc char which is 8 bits;
+                   printable ASCII values take up the lower half of the 
+                   codespace in GM2.
+                   If the ordinal value of a is outside the printable 
+                   ASCII range, the Unicode character 
+                   'REPLACEMENT CHARACTER' is returned.
+                   The size and encoding of a Modula-2 char is undefined 
+                   in both PIM and ISO Modula-2.
+*)
+
+PROCEDURE CodepointToUChar (cp: CARDINAL): UChar;
+(* 
+   CodepointToUchar -   converts a numeric codepoint, cp, into a 
+                   Unicode character. For example the cardinal 3608, which 
+                   has the hexadecimal representation 0E18H, would return 
+                   the Unicode character THAI CHARACTER THO THONG.
+*)
+
+PROCEDURE IsBMP (cu: UTF16_codeunit): BOOLEAN;
+(*
+   IsBMP -         returns true if the UTF16_codeunit, cu, corresponds to
+                   a Basic Multilingual Plane (BMP) Unicode character. 
+                   Otherwise (cu is a low or high surrogate) returns false.
+*)
+
+PROCEDURE BMPToUChar (b: UTF16_codeunit): UChar;
+(*
+   BMPToUchar -    converts a single UTF16_codeunit within the BMP, b,
+                   into a Unicode character. If b is not in the BMP 
+                   but is a low or high surrogate, the Unicode character 
+                   'REPLACEMENT CHARACTER' is returned.
+*)
+  
+
+PROCEDURE SurrogatesToUChar (low, high: UTF16_codeunit): UChar;
+(*
+   SurrogatesToUchar - converts a pair of surrogate characters, low and high,
+                   into a Unicode character. If low is outside the range 
+                   for low surrogates and/or high is outside the range 
+                   for high surrogates, the Unicode character 
+                   'REPLACEMENT CHARACTER' is returned.
+*)
+  
+(*
+  Maybe add UTF8 utility functions to this module also
+*)
+
+END Unicode.
