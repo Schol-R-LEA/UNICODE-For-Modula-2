@@ -65,7 +65,7 @@ BEGIN
    a[3] := CodepointToUNICHAR(0E18H);  (* a non-ASCII char which is a BMP codepoint *)
    a[4] := BMPToUNICHAR(0E18H);           (* a non-ASCII char which is a BMP codepoint *)
    a[5] := SurrogatesToUNICHAR(0DC01H, 0D801H);  (* a non-ASCII char which is not a BMP codepoint *)
-   a[5] := CodepointToUNICHAR(0FFFFFFFFH);  (* an invalid codepoint, should return REPLACEMENT CHAR *)
+   a[6] := CodepointToUNICHAR(0FFFFFFFFH);  (* an invalid codepoint, should return REPLACEMENT CHAR *)
 
    FOR i := 0 TO 9 DO
       TestUnichar(a[i]);
