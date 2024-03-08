@@ -49,6 +49,9 @@ IMPLEMENTATION MODULE Unicode ;
    pursued at some future point.
 *)
 
+FROM DynamicStrings IMPORT String, InitString, CopyOut, Add, Fin;
+FROM StringConvert IMPORT CardinalToString;
+
 CONST
    Replacement = 0FFFDH;      (* Unicode REPLACEMENT CHARACTER *)
    HighLower = 0D800H;
@@ -205,5 +208,22 @@ BEGIN
       RETURN Replacement;
    END;
 END SurrogatesToUNICHAR;
+
+
+PROCEDURE CodepointToString(cp: UCS4_codeunit; VAR str: ARRAY OF CHAR);
+VAR
+   open, value, close, result: String;
+BEGIN
+   open := InitString("[U+");
+   value := CardinalToString(cp, 4, "0", 16, FALSE);
+   close := InitString("]");
+   result := Add(open, Add(value, close));
+   CopyOut(str, result);
+   Fin(result);
+   Fin(close);
+   Fin(value);
+   Fin(open);
+END CodepointToString;
+
 
 END Unicode.

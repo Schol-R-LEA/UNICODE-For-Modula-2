@@ -1,14 +1,31 @@
+(* Copyright (C) 2024 Alice Osako,
+   based on code Copyright (C) 2010 The Free Software Foundation, Inc. *)
+(*
+UNICODE for Modula-2 is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License as published
+by the Free Software Foundation; either version 3, or (at your option)
+any later version.
+
+UNICODE for Modula-2 is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+
+You should have received a copy of the GNU General Public License along
+with this package; see the file COPYING.  If not, write to the Free Software
+Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA. *)
+
+
 MODULE TestUCS4Repr;
 
 FROM Unicode IMPORT UNICHAR, UCS4_codeunit, IsUnicode,
                     CharToUNICHAR,
                     IsPrintableASCII, ASCIIToUNICHAR,
-                    CodepointToUNICHAR,
+                    CodepointToUNICHAR, CodepointToString,
                     IsBMP, BMPToUNICHAR, SurrogatesToUNICHAR;
 
 FROM STextIO IMPORT WriteChar, WriteString, WriteLn;
 FROM DynamicStrings IMPORT CopyOut;
-FROM StringConvert IMPORT CardinalToString;
 
 
 VAR
@@ -44,16 +61,18 @@ VAR
 BEGIN
    WriteChar("'");
    WriteChar(CHR(uc));
-   WriteString("' [U+");
-   CopyOut(buffer, CardinalToString(uc, 4, "0", 16, FALSE));
+   WriteString("' ");
+
+   CodepointToString(uc, buffer);
    WriteString(buffer);
-   WriteString("] ");
+
    IF IsUnicode(uc) THEN
       WriteString(" is ");
    ELSE
       WriteString(" is not ");
    END;
    WriteString("a valid codepoint;");
+
    TestIsASCII(uc);
    TestIsBMP(uc);
 END TestUnichar;

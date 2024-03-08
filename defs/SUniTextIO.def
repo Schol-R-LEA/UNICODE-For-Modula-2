@@ -15,19 +15,13 @@ You should have received a copy of the GNU General Public License along
 with this package; see the file COPYING.  If not, write to the Free Software
 Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA. *)
 
-(* This package is derived from an earlier incomplete package by Chris Lilley
-   working for the Free Software Foundation in 2010. *)
+DEFINITION MODULE SUniTextIO ;
 
+FROM Unicode IMPORT UNICHAR, UCS4_codeunit;
+FROM UTF8 IMPORT UTF8Buffer;
 
-DEFINITION MODULE UnicodeEncoding ;
+PROCEDURE ReadUtf8Buffer(VAR utf8: UTF8Buffer): CARDINAL;
 
-FROM Unicode IMPORT UNICHAR, UCS4_codeunit
+PROCEDURE WriteUtf8Buffer(utf8: UTF8Buffer);
 
-TYPE
-    TFEncodingType = (UTF7, UTF8, UTF16, UTF32);   (* an enumeration of UNICODE encoding types *)
-
-PROCEDURE DetectEncoding(ARRAY OF UNICHAR): TFEncodingType;
-
-
-
-END UnicodeEncoding.
+END SUniTextIO.

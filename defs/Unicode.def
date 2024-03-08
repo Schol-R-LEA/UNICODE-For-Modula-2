@@ -107,8 +107,7 @@ PROCEDURE IsBMP (cu: UCS4_codeunit): BOOLEAN;
 PROCEDURE IsSurrogate (cu: UCS4_codeunit): BOOLEAN;
 (*
    IsSurrogate -   returns true if the UCS4_codeunit, cu, corresponds to
-                   a Surrogate Unicode character.
-                   Otherwise returns false.
+                   a Surrogate Unicode character. Otherwise returns false.
 *)
 
 
@@ -130,5 +129,6 @@ PROCEDURE SurrogatesToUNICHAR (low, high: UCS4_codeunit): UNICHAR;
                    'REPLACEMENT CHARACTER' is returned.
 *)
 
+PROCEDURE CodepointToString(cp: UCS4_codeunit; VAR str: ARRAY OF CHAR);
 
 END Unicode.
