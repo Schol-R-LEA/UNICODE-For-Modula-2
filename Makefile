@@ -1,4 +1,5 @@
-COMPILER=$(HOME)/opt/bin/gm2
+CC_PATH=$(HOME)/opt/bin
+COMPILER=$(CC_PATH)/gm2
 FLAGS=-g -fiso
 INC=defs
 SRC=impls

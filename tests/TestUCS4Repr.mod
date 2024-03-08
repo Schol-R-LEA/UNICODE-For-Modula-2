@@ -1,6 +1,6 @@
 MODULE TestUCS4Repr;
 
-FROM Unicode IMPORT UNICHAR, UCS4_codeunit,
+FROM Unicode IMPORT UNICHAR, UCS4_codeunit, IsUnicode,
                     CharToUNICHAR,
                     IsPrintableASCII, ASCIIToUNICHAR,
                     CodepointToUNICHAR,
@@ -48,6 +48,12 @@ BEGIN
    CopyOut(buffer, CardinalToString(uc, 4, "0", 16, FALSE));
    WriteString(buffer);
    WriteString("] ");
+   IF IsUnicode(uc) THEN
+      WriteString(" is ");
+   ELSE
+      WriteString(" is not ");
+   END;
+   WriteString("a valid codepoint;");
    TestIsASCII(uc);
    TestIsBMP(uc);
 END TestUnichar;
@@ -59,6 +65,7 @@ BEGIN
    a[3] := CodepointToUNICHAR(0E18H);  (* a non-ASCII char which is a BMP codepoint *)
    a[4] := BMPToUNICHAR(0E18H);           (* a non-ASCII char which is a BMP codepoint *)
    a[5] := SurrogatesToUNICHAR(0DC01H, 0D801H);  (* a non-ASCII char which is not a BMP codepoint *)
+   a[5] := CodepointToUNICHAR(0FFFFFFFFH);  (* an invalid codepoint, should return REPLACEMENT CHAR *)
 
    FOR i := 0 TO 9 DO
       TestUnichar(a[i]);
