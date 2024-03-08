@@ -5,8 +5,8 @@ SRC=impls
 BIN=bin
 TESTS=tests
 
-test: $(TESTS)/testrepr.mod $(BIN)/Unicode.o
-	$(COMPILER) $(FLAGS) -I.:$(INC)/ $(TESTS)/testrepr.mod $(BIN)/Unicode.o -o $(BIN)/testrepr
+test: $(TESTS)/TestUCS4Repr.mod $(BIN)/Unicode.o
+	$(COMPILER) $(FLAGS) -I$(INC)/ $(TESTS)/TestUCS4Repr.mod $(BIN)/Unicode.o -o $(BIN)/TestUCS4Repr
 
 unicode: $(SRC)/Unicode.mod $(INC)/Unicode.def
 	$(COMPILER) $(FLAGS) -I$(INC)/ -c $(SRC)/Unicode.mod -o $(BIN)/Unicode.o

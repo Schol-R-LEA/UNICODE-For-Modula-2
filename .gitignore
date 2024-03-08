@@ -1,3 +1,6 @@
 # Object file
 *.o
 
+bin/.
+
+.vscode

@@ -49,19 +49,26 @@ IMPLEMENTATION MODULE Unicode ;
    pursued at some future point.
 *)
 
-CONST Replacement = 0FFFDH;      (* Unicode REPLACEMENT CHARACTER *)
-
-VAR
-      High : [0D800H .. 0DBFFH];  (* high surrogate range *)
-      Low  : [0DC00H .. 0DFFFH];  (* low surrogate range *)
+CONST
+   Replacement = 0FFFDH;      (* Unicode REPLACEMENT CHARACTER *)
+   HighLower = 0D800H;
+   HighUpper = 0DBFFH;  (* high surrogate range *)
+   LowLower = 0DC00H;
+   LowUpper = 0DFFFH;  (* low surrogate range *)
 
 
 
 (*
    UNICHAR is a CARDINAL subrange and covers all Unicode planes.
 
-   UTF32_codeunit is 32 bits.
+   UCS4_codeunit is 32 bits.
 *)
+
+PROCEDURE IsUnicode(uc: UNICHAR): BOOLEAN;
+
+BEGIN
+   RETURN uc <= MaxUnicode;
+END IsUnicode;
 
 PROCEDURE CharToUNICHAR (c: CHAR): UNICHAR;
 (*
@@ -95,17 +102,16 @@ PROCEDURE ASCIIToUNICHAR (a: CHAR): UNICHAR;
                    in both PIM and ISO Modula-2.
 *)
 VAR
-   ASCIIRange : [32..127];
-   cp: CARDINAL;  (* Unicode codepoint of the passed ASCII character *)
+   cp: UCS4_codeunit;  (* Unicode codepoint of the passed ASCII character *)
 
 BEGIN
    cp := ORD(a);
    (* if the locale is ASCII, or an ASCII superset like Latin-1,
       cp will be the code point of the expected character.
-      if the locale is a code-switching set, or EBCIDIC or something,
+      if the locale is a code-switching set, or EBCDIC or something,
       then you get what you get, and should not be claiming it covers ASCII.
    *)
-   IF (cp IN ASCIIRange) THEN
+   IF IsPrintableASCII(cp) THEN
       RETURN cp;
    ELSE
       RETURN Replacement;
@@ -130,36 +136,60 @@ BEGIN
    END;
 END CodepointToUNICHAR;
 
-PROCEDURE IsBMP (cu: UTF32_codeunit): BOOLEAN;
+PROCEDURE IsPrintableASCII (cu: UCS4_codeunit): BOOLEAN;
 (*
-   IsBMP -         returns true if the UTF32_codeunit, cu, corresponds to
+   IsPrintableASCII - returns true if the UCS4_codeunit, cu, corresponds to
+                   an ASCII character. Otherwise returns false.
+*)
+
+BEGIN
+   IF (cu >= 32) AND (cu <= 127) THEN
+      RETURN TRUE;
+   ELSE
+      RETURN FALSE;
+   END;
+END IsPrintableASCII;
+
+
+PROCEDURE IsBMP (cu: UCS4_codeunit): BOOLEAN;
+(*
+   IsBMP -         returns true if the UCS4_codeunit, cu, corresponds to
                    a Basic Multilingual Plane (BMP) Unicode character.
                    Otherwise (cu is a low or high surrogate) returns false.
 *)
 BEGIN
-   IF (cu IN High) OR (cu IN Low) THEN
-      RETURN FALSE;
-   ELSE
-      RETURN TRUE;
-   END;
+   RETURN cu <= 0FFFFH;
 END IsBMP;
 
-PROCEDURE BMPToUNICHAR (b: UTF32_codeunit): UNICHAR;
+
+PROCEDURE IsSurrogate (cu: UCS4_codeunit): BOOLEAN;
 (*
-   BMPToUNICHAR -    converts a single UTF32_codepoint within the BMP, b,
+   IsSurrogate -   returns true if the UCS4_codeunit, cu, corresponds to
+                   a Surrogate Unicode character.
+                   Otherwise returns false.
+*)
+BEGIN
+   RETURN ((cu >= HighLower) AND (cu <= HighUpper))
+          OR ((cu >= LowLower) AND (cu <= LowUpper));
+END IsSurrogate;
+
+
+PROCEDURE BMPToUNICHAR (b: UCS4_codeunit): UNICHAR;
+(*
+   BMPToUNICHAR -    converts a single UCS4_codepoint within the BMP, b,
                    into a Unicode character. If b is not in the BMP 
                    but is a low high surrogate, the Unicode character 
                    'REPLACEMENT CHARACTER' is returned.
 *)
 BEGIN
-   IF (b IN High) OR (b IN Low) THEN
-      RETURN Replacement;
-   ELSE
+   IF IsBMP(b) THEN
       RETURN ORD(b);
+   ELSE
+      RETURN Replacement;
    END;
 END BMPToUNICHAR;
 
-PROCEDURE SurrogatesToUNICHAR (low, high: UTF32_codeunit): UNICHAR;
+PROCEDURE SurrogatesToUNICHAR (low, high: UCS4_codeunit): UNICHAR;
 (*
    SurrogatesToUNICHAR - converts a pair of surrogate characters, low and high,
                    into a Unicode character. If low is outside the range
@@ -168,7 +198,8 @@ PROCEDURE SurrogatesToUNICHAR (low, high: UTF32_codeunit): UNICHAR;
                    'REPLACEMENT CHARACTER' is returned.
 *)
 BEGIN
-   IF (high IN High) AND (low IN Low) THEN
+   IF ((high >= HighLower) AND (high <= HighUpper))
+      AND ((low >= LowLower) AND (low <= LowUpper)) THEN
       RETURN (high - 0D800H) * 400H + (low - 0DC00H) + 10000H;
    ELSE
       RETURN Replacement;

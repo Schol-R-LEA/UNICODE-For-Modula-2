@@ -34,9 +34,8 @@ DEFINITION MODULE Unicode ;
 CONST MaxUnicode = 10FFFFH;  (*maximum Unicode value *)
 
 TYPE
-    UNICHAR = [0 .. MaxUnicode]; (* a single Unicode character *)
-    UTF32_codeunit = CARDINAL;   (* a single UTF-32 code unit  *)
-    TFEncodingType = (UTF7, UTF8, UTF16, UTF32);   (* an enumeration of UNICODE encoding types *)
+    UNICHAR = CARDINAL [0 .. MaxUnicode];   (* a single Unicode character *)
+    UCS4_codeunit = CARDINAL;               (* a single UCS-4 code unit  *)
 
 (*
    UNICHAR can hold any Unicode character. It is not restricted to
@@ -46,10 +45,18 @@ TYPE
    A Unicode character also has a name, and a set of associated
    character properties.
 
-   UTF-32_codeunit holds a single code unit as used in the UNICODE
-   Transformation Format, 32 bit. A codeunit is either a
-   character in the BMP, a Low Surrogate, or a High Surrogate.
+   For the purposes of this program, 'UCS-n' shall refer to the internal
+   representation of the Unicode characters, while 'UTF-n' shall refer to
+   the specific UCS Transformation Format. Thus, while UCS-4 and UTF-32
+   are in practice synonyms, they are referred to here as distinct concepts.
+
+   UCS4_codeunit holds a single code unit as used in the UNICODE character
+   Set, Four Byte Representation. A codeunit is either a character in
+   the BMP, a Low Surrogate, or a High Surrogate.
 *)
+
+PROCEDURE IsUnicode(uc: UNICHAR): BOOLEAN;
+
 
 PROCEDURE CharToUNICHAR (c: CHAR): UNICHAR;
 (* 
@@ -63,7 +70,7 @@ PROCEDURE CharToUNICHAR (c: CHAR): UNICHAR;
 
 PROCEDURE ASCIIToUNICHAR (a: CHAR): UNICHAR;
 (* 
-   ASCIIToUNICHAR -  converts a single ASCII printable char, a, into 
+   ASCIIToUNICHAR -  converts a single ASCII printable char, a, into
                    a Unicode character in the Basic Latin block.
                    For GM2, a Modula-2 char is a gcc char which is 8 bits;
                    printable ASCII values take up the lower half of the
@@ -71,7 +78,7 @@ PROCEDURE ASCIIToUNICHAR (a: CHAR): UNICHAR;
                    If the ordinal value of a is outside the printable
                    ASCII range, the Unicode character
                    'REPLACEMENT CHARACTER' is returned.
-                   The size and encoding of a Modula-2 char is undefined 
+                   The size and encoding of a Modula-2 char is undefined
                    in both PIM and ISO Modula-2.
 *)
 
@@ -83,28 +90,43 @@ PROCEDURE CodepointToUNICHAR (cp: CARDINAL): UNICHAR;
                    the Unicode character THAI CHARACTER THO THONG.
 *)
 
-PROCEDURE IsBMP (cu: UTF32_codeunit): BOOLEAN;
+
+PROCEDURE IsPrintableASCII (cu: UCS4_codeunit): BOOLEAN;
 (*
-   IsBMP -         returns true if the UTF32_codeunit, cu, corresponds to
-                   a Basic Multilingual Plane (BMP) Unicode character. 
+   IsPrintableASCII -     returns true if the UCS4_codeunit, cu, corresponds to
+                   an ASCII character. Otherwise returns false.
+*)
+
+PROCEDURE IsBMP (cu: UCS4_codeunit): BOOLEAN;
+(*
+   IsBMP -         returns true if the UCS4_codeunit, cu, corresponds to
+                   a Basic Multilingual Plane (BMP) Unicode character.
                    Otherwise (cu is a low or high surrogate) returns false.
 *)
 
-PROCEDURE BMPToUNICHAR (b: UTF32_codeunit): UNICHAR;
+PROCEDURE IsSurrogate (cu: UCS4_codeunit): BOOLEAN;
 (*
-   BMPToUNICHAR -    converts a single UTF32_codeunit within the BMP, b,
-                   into a Unicode character. If b is not in the BMP 
-                   but is a low or high surrogate, the Unicode character 
+   IsSurrogate -   returns true if the UCS4_codeunit, cu, corresponds to
+                   a Surrogate Unicode character.
+                   Otherwise returns false.
+*)
+
+
+PROCEDURE BMPToUNICHAR (b: UCS4_codeunit): UNICHAR;
+(*
+   BMPToUNICHAR -    converts a single UCS4_codeunit within the BMP, b,
+                   into a Unicode character. If b is not in the BMP
+                   but is a low or high surrogate, the Unicode character
                    'REPLACEMENT CHARACTER' is returned.
 *)
 
 
-PROCEDURE SurrogatesToUNICHAR (low, high: UTF32_codeunit): UNICHAR;
+PROCEDURE SurrogatesToUNICHAR (low, high: UCS4_codeunit): UNICHAR;
 (*
    SurrogatesToUNICHAR - converts a pair of surrogate characters, low and high,
-                   into a Unicode character. If low is outside the range 
-                   for low surrogates and/or high is outside the range 
-                   for high surrogates, the Unicode character 
+                   into a Unicode character. If low is outside the range
+                   for low surrogates and/or high is outside the range
+                   for high surrogates, the Unicode character
                    'REPLACEMENT CHARACTER' is returned.
 *)
 
