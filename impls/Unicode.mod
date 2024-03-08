@@ -26,12 +26,12 @@ IMPLEMENTATION MODULE Unicode ;
     Authors    : Chris Lilley; Alice Osako
     System     : UNIX (GNU Modula-2)
     Date       : 2010-10-03 19:01:11
-    Last edit  : $Date: 2024-03-07 15:37:21 $
+    Last edit  : $Date: 2024-03-07 19:20:50 $
     Revision   : $Version$
     Description: provides Unicode base types.
 *)
 
-(* This module provides a type, Uchar, which is intended as a Unicode Level 1
+(* This module provides a type, UNICHAR, which is intended as a Unicode Level 1
    compliant replacement for char, for single characters.
 
    This implementation diverges from the prior Lilley design in that it uses a
@@ -49,27 +49,23 @@ IMPLEMENTATION MODULE Unicode ;
    pursued at some future point.
 *)
 
-CONST Replacement = FFFDH;      (* Unicode REPLACEMENT CHARACTER *)
+CONST Replacement = 0FFFDH;      (* Unicode REPLACEMENT CHARACTER *)
 
 VAR
       High : [0D800H .. 0DBFFH];  (* high surrogate range *)
       Low  : [0DC00H .. 0DFFFH];  (* low surrogate range *)
 
-TYPE
-    UChar = [0 .. MaxUnicode];     (* a single Unicode character *)
-    UTF32_codeunit = CARDINAL;     (* a single UTF-32 code unit  *)
 
-    TFEncodingType = (UTF7, UTF8, UTF16, UTF32);
 
 (*
-   Uchar is a CARDINAL subrange and covers all Unicode planes.
+   UNICHAR is a CARDINAL subrange and covers all Unicode planes.
 
    UTF32_codeunit is 32 bits.
 *)
 
-PROCEDURE CharToUChar (c: CHAR): UChar;
-(* 
-   CharToUchar -   converts a single char, c, into a Unicode character.
+PROCEDURE CharToUNICHAR (c: CHAR): UNICHAR;
+(*
+   CharToUNICHAR -   converts a single char, c, into a Unicode character.
                    For GM2, a Modula-2 char is a gcc char which is 8 bits.
                    The character represented by a CHAR with an ordinal
                    value greater than 127 depends on the locale.
@@ -83,30 +79,30 @@ BEGIN
      so the result is always valid, just underdefined and system dependent. 
      Moral: do not use char for real text processing.
    *)
-END CharToUChar;
+END CharToUNICHAR;
 
-PROCEDURE ASCIIToUChar (a: CHAR): UChar;
-(* 
-   ASCIIToUChar -  converts a single ASCII printable char, a, into 
+PROCEDURE ASCIIToUNICHAR (a: CHAR): UNICHAR;
+(*
+   ASCIIToUNICHAR -  converts a single ASCII printable char, a, into
                    a Unicode character in the Basic Latin block.
                    For GM2, a Modula-2 char is a gcc char which is 8 bits;
-                   printable ASCII values take up the lower half of the 
+                   printable ASCII values take up the lower half of the
                    codespace in GM2.
-                   If the ordinal value of a is outside the printable 
-                   ASCII range, the Unicode character 
+                   If the ordinal value of a is outside the printable
+                   ASCII range, the Unicode character
                    'REPLACEMENT CHARACTER' is returned.
-                   The size and encoding of a Modula-2 char is undefined 
+                   The size and encoding of a Modula-2 char is undefined
                    in both PIM and ISO Modula-2.
 *)
-VAR ASCIIRange : [32..127];
-
+VAR
+   ASCIIRange : [32..127];
    cp: CARDINAL;  (* Unicode codepoint of the passed ASCII character *)
 
 BEGIN
    cp := ORD(a);
-   (* if the locale is ASCII, or an ASCII superset like Latin-1, 
+   (* if the locale is ASCII, or an ASCII superset like Latin-1,
       cp will be the code point of the expected character.
-      if the locale is  a code-switching set, or EBCIDIC or something,
+      if the locale is a code-switching set, or EBCIDIC or something,
       then you get what you get, and should not be claiming it covers ASCII.
    *)
    IF (cp IN ASCIIRange) THEN
@@ -114,15 +110,15 @@ BEGIN
    ELSE
       RETURN Replacement;
    END;
-END ASCIIToUChar;
+END ASCIIToUNICHAR;
 
 
 
-PROCEDURE CodepointToUChar (cp: CARDINAL): UChar;
-(* 
-   CodepointToUChar -   converts a numeric codepoint, cp, into a 
-                   Unicode character. For example the cardinal 3608, which 
-                   has the hexadecimal representation 0E18H, would return 
+PROCEDURE CodepointToUNICHAR (cp: CARDINAL): UNICHAR;
+(*
+   CodepointToUNICHAR -   converts a numeric codepoint, cp, into a
+                   Unicode character. For example the cardinal 3608, which
+                   has the hexadecimal representation 0E18H, would return
                    the Unicode character U+0E18, THAI CHARACTER THO THONG.
 *)
 
@@ -132,7 +128,7 @@ BEGIN
    ELSE
       RETURN Replacement;
    END;
-END CodepointToUChar;
+END CodepointToUNICHAR;
 
 PROCEDURE IsBMP (cu: UTF32_codeunit): BOOLEAN;
 (*
@@ -148,9 +144,9 @@ BEGIN
    END;
 END IsBMP;
 
-PROCEDURE BMPToUChar (b: UTF32_codeunit): UChar;
+PROCEDURE BMPToUNICHAR (b: UTF32_codeunit): UNICHAR;
 (*
-   BMPToUChar -    converts a single UTF32_codepoint within the BMP, b,
+   BMPToUNICHAR -    converts a single UTF32_codepoint within the BMP, b,
                    into a Unicode character. If b is not in the BMP 
                    but is a low high surrogate, the Unicode character 
                    'REPLACEMENT CHARACTER' is returned.
@@ -161,11 +157,11 @@ BEGIN
    ELSE
       RETURN ORD(b);
    END;
-END BMPToUChar;
+END BMPToUNICHAR;
 
-PROCEDURE SurrogatesToUChar (low, high: UTF32_codeunit): UChar;
+PROCEDURE SurrogatesToUNICHAR (low, high: UTF32_codeunit): UNICHAR;
 (*
-   SurrogatesToUchar - converts a pair of surrogate characters, low and high,
+   SurrogatesToUNICHAR - converts a pair of surrogate characters, low and high,
                    into a Unicode character. If low is outside the range
                    for low surrogates and/or high is outside the range
                    for high surrogates, the Unicode character 
@@ -173,13 +169,10 @@ PROCEDURE SurrogatesToUChar (low, high: UTF32_codeunit): UChar;
 *)
 BEGIN
    IF (high IN High) AND (low IN Low) THEN
-      RETURN (high - 0D800H) * 400H + (low - 0DC00H) + 10000H;  
+      RETURN (high - 0D800H) * 400H + (low - 0DC00H) + 10000H;
    ELSE
       RETURN Replacement;
    END;
-END SurrogatesToUChar;
-
-
-
+END SurrogatesToUNICHAR;
 
 END Unicode.

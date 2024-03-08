@@ -26,7 +26,7 @@ DEFINITION MODULE Unicode ;
     Authors    : Chris Lilley; Alice Osako
     System     : UNIX (GNU Modula-2)
     Date       : 2010-10-03 19:01:11
-    Last edit  : $Date: 2024-03-07 15:37:21 $
+    Last edit  : $Date: 2024-03-07 19:20:40 $
     Revision   : $Version$
     Description: provides Unicode base types.
 *)
@@ -34,13 +34,12 @@ DEFINITION MODULE Unicode ;
 CONST MaxUnicode = 10FFFFH;  (*maximum Unicode value *)
 
 TYPE
-    UChar;            (* a single Unicode character *)
-    UString;          (* a string of UNICODE characters *)
-    UTF32_codeunit;   (* a single UTF-32 code unit  *)
-    TFEncodingType;   (* an enumeration of UNICODE encoding types *)
+    UNICHAR = [0 .. MaxUnicode]; (* a single Unicode character *)
+    UTF32_codeunit = CARDINAL;   (* a single UTF-32 code unit  *)
+    TFEncodingType = (UTF7, UTF8, UTF16, UTF32);   (* an enumeration of UNICODE encoding types *)
 
 (*
-   Uchar can hold any Unicode character. It is not restricted to
+   UNICHAR can hold any Unicode character. It is not restricted to
    the Basic Multilinual Plane (BMP). Each Unicode character has
    a unique codepoint between 0 and MaxUnicode; this value is
    published by the Unicode consortium.
@@ -52,9 +51,9 @@ TYPE
    character in the BMP, a Low Surrogate, or a High Surrogate.
 *)
 
-PROCEDURE CharToUChar (c: CHAR): UChar;
+PROCEDURE CharToUNICHAR (c: CHAR): UNICHAR;
 (* 
-   CharToUChar -   converts a single char, c, into a Unicode character.
+   CharToUNICHAR -   converts a single char, c, into a Unicode character.
                    For GM2, a Modula-2 char is a gcc char which is 8 bits.
                    The character represented by a CHAR with an ordinal
                    value greater than 127 depends on the locale.
@@ -62,9 +61,9 @@ PROCEDURE CharToUChar (c: CHAR): UChar;
                    in both PIM and ISO Modula-2.
 *)
 
-PROCEDURE ASCIIToUChar (a: CHAR): UChar;
+PROCEDURE ASCIIToUNICHAR (a: CHAR): UNICHAR;
 (* 
-   ASCIIToUChar -  converts a single ASCII printable char, a, into 
+   ASCIIToUNICHAR -  converts a single ASCII printable char, a, into 
                    a Unicode character in the Basic Latin block.
                    For GM2, a Modula-2 char is a gcc char which is 8 bits;
                    printable ASCII values take up the lower half of the
@@ -76,9 +75,9 @@ PROCEDURE ASCIIToUChar (a: CHAR): UChar;
                    in both PIM and ISO Modula-2.
 *)
 
-PROCEDURE CodepointToUChar (cp: CARDINAL): UChar;
+PROCEDURE CodepointToUNICHAR (cp: CARDINAL): UNICHAR;
 (* 
-   CodepointToUchar -   converts a numeric codepoint, cp, into a
+   CodepointToUNICHAR -   converts a numeric codepoint, cp, into a
                    Unicode character. For example the cardinal 3608, which
                    has the hexadecimal representation 0E18H, would return
                    the Unicode character THAI CHARACTER THO THONG.
@@ -91,34 +90,23 @@ PROCEDURE IsBMP (cu: UTF32_codeunit): BOOLEAN;
                    Otherwise (cu is a low or high surrogate) returns false.
 *)
 
-PROCEDURE BMPToUChar (b: UTF32_codeunit): UChar;
+PROCEDURE BMPToUNICHAR (b: UTF32_codeunit): UNICHAR;
 (*
-   BMPToUchar -    converts a single UTF32_codeunit within the BMP, b,
+   BMPToUNICHAR -    converts a single UTF32_codeunit within the BMP, b,
                    into a Unicode character. If b is not in the BMP 
                    but is a low or high surrogate, the Unicode character 
                    'REPLACEMENT CHARACTER' is returned.
 *)
 
 
-PROCEDURE SurrogatesToUChar (low, high: UTF32_codeunit): UChar;
+PROCEDURE SurrogatesToUNICHAR (low, high: UTF32_codeunit): UNICHAR;
 (*
-   SurrogatesToUchar - converts a pair of surrogate characters, low and high,
+   SurrogatesToUNICHAR - converts a pair of surrogate characters, low and high,
                    into a Unicode character. If low is outside the range 
                    for low surrogates and/or high is outside the range 
                    for high surrogates, the Unicode character 
                    'REPLACEMENT CHARACTER' is returned.
 *)
 
-
-PROCEDURE DetectEncoding(ustr: UString): TFEncodingType;
-(*
-   DetectEncoding - Determine the encoding of a UNICODE string.
-*)
-
-
-PROCEDURE UStringToUTF8String(UString ustr): UTF8String;
-(*
-   UStringToUTF8String - 
-*)
 
 END Unicode.
