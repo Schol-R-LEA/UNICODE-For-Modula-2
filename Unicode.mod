@@ -1,68 +1,70 @@
-(* Copyright (C) 2010
-                 Free Software Foundation, Inc. *)
-(* This file is planned to be part of GNU Modula-2.
+(* Copyright (C) 2024 Alice Osako,
+based on code Copyright (C) 2010 The Free Software Foundation, Inc. *)
 
-GNU Modula-2 is free software; you can redistribute it and/or modify it under
-the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 3, or (at your option) any later
-version.
+(*
+UNICODE for Modula-2 is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License as published
+by the Free Software Foundation; either version 3, or (at your option)
+any later version.
 
-GNU Modula-2 is distributed in the hope that it will be useful, but WITHOUT ANY
-WARRANTY; without even the implied warranty of MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+UNICODE for Modula-2 is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License along
-with gm2; see the file COPYING.  If not, write to the Free Software
+with this package; see the file COPYING.  If not, write to the Free Software
 Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA. *)
+
+(* This package is derived from an earlier incomplete package by Chris Lilley
+   working for the Free Software Foundation in 2010. *)
 
 IMPLEMENTATION MODULE Unicode ;
 
 (*
     Title      : Unicode
-    Author     : Chris Lilley
+    Authors    : Chris Lilley; Alice Osako
     System     : UNIX (GNU Modula-2)
-    Date       : 
-    Last edit  : $Date: 2010/10/03 19:01:11 $ 
-    Revision   : $Version$ 
+    Date       : 2010-10-03 19:01:11
+    Last edit  : $Date: 2024-03-07 15:37:21 $
+    Revision   : $Version$
     Description: provides Unicode base types.
 *)
 
-(* This module provides a type, Uchar, which is intended as a Unicode-compliant 
-   replacement for char, for single characters. Using 32 bits per character is
-   wasteful for strings, so this module also provides support functions
-   for UTF-16 strings, as used by many modern programming languages for 
-   Unicode string support. The benefits of direct adressability are retained
-   while using only 16 bits for all common (Basic Multilingual Plane)
-   characters, and a pair of 16-bit surrogates to represent uncommon 
-   characters in 32 bits.
+(* This module provides a type, Uchar, which is intended as a Unicode Level 1
+   compliant replacement for char, for single characters.
 
-   The implementation focus of this module is on always returning 
+   This implementation diverges from the prior Lilley design in that it uses a
+   32-bit base representation rather than a 16-bit one.
+
+   The implementation focus of this module is on always returning
    valid Unicode characters. Therefore, the Unicode 'REPLACEMENT CHARACTER'
-   is used whenever the conversion would give a result outside the Unicode 
-   range, or would give nonsense (combining a low and high surrogate), or
+   is used whenever the conversion would give a result outside the Unicode
+   range, or would give nonsense (e.g., combining a low and high surrogate), or
    converting a supposed ASCII character which is outside the ASCII printable
    character range.
+
+   Extension beyond UNICODE Level 1 (e.g., support for bidirectional text,
+   combining characters, etc.) is not planned at this time, but may be
+   pursued at some future point.
 *)
 
 CONST Replacement = FFFDH;      (* Unicode REPLACEMENT CHARACTER *)
 
 VAR
-      High : [D800H .. DBFFH];  (* high surrogate range *)
-      Low  : [DC00H .. DFFFH];  (* low surrogate range *)
+      High : [0D800H .. 0DBFFH];  (* high surrogate range *)
+      Low  : [0DC00H .. 0DFFFH];  (* low surrogate range *)
 
 TYPE
     UChar = [0 .. MaxUnicode];     (* a single Unicode character *)
-    UTF16_codeunit = SHORTCARD;     (* a single UTF-16 code unit  *)
+    UTF32_codeunit = CARDINAL;     (* a single UTF-32 code unit  *)
 
-(* 
+    TFEncodingType = (UTF7, UTF8, UTF16, UTF32);
+
+(*
    Uchar is a CARDINAL subrange and covers all Unicode planes.
 
-   UTF16_codeunit is 16bits. This could be done with a SHORTCARD (probably 
-   16 bits) or one of the ISO SYSTEM types, like CARDIBAL16. The latter 
-   would definitely be 16 bits, but may not be supported on some architectures.
-   Is Shortcard ever 8bits on any architecture?
-
+   UTF32_codeunit is 32 bits.
 *)
 
 PROCEDURE CharToUChar (c: CHAR): UChar;
@@ -132,10 +134,10 @@ BEGIN
    END;
 END CodepointToUChar;
 
-PROCEDURE IsBMP (cu: UTF16_codeunit): BOOLEAN;
+PROCEDURE IsBMP (cu: UTF32_codeunit): BOOLEAN;
 (*
-   IsBMP -         returns true if the UTF16_codeunit, cu, corresponds to
-                   a Basic Multilingual Plane (BMP) Unicode character. 
+   IsBMP -         returns true if the UTF32_codeunit, cu, corresponds to
+                   a Basic Multilingual Plane (BMP) Unicode character.
                    Otherwise (cu is a low or high surrogate) returns false.
 *)
 BEGIN
@@ -146,9 +148,9 @@ BEGIN
    END;
 END IsBMP;
 
-PROCEDURE BMPToUChar (b: UTF16_codeunit): UChar;
+PROCEDURE BMPToUChar (b: UTF32_codeunit): UChar;
 (*
-   BMPToUChar -    converts a single UTF16_codepoint within the BMP, b,
+   BMPToUChar -    converts a single UTF32_codepoint within the BMP, b,
                    into a Unicode character. If b is not in the BMP 
                    but is a low high surrogate, the Unicode character 
                    'REPLACEMENT CHARACTER' is returned.
@@ -159,26 +161,25 @@ BEGIN
    ELSE
       RETURN ORD(b);
    END;
-END BMPToUChar;  
+END BMPToUChar;
 
-PROCEDURE SurrogatesToUChar (low, high: UTF16_codeunit): UChar;
+PROCEDURE SurrogatesToUChar (low, high: UTF32_codeunit): UChar;
 (*
    SurrogatesToUchar - converts a pair of surrogate characters, low and high,
-                   into a Unicode character. If low is outside the range 
-                   for low surrogates and/or high is outside the range 
+                   into a Unicode character. If low is outside the range
+                   for low surrogates and/or high is outside the range
                    for high surrogates, the Unicode character 
                    'REPLACEMENT CHARACTER' is returned.
 *)
 BEGIN
    IF (high IN High) AND (low IN Low) THEN
-      RETURN (high - D800H) * 400H + (low - DC00H) + 10000H;  
+      RETURN (high - 0D800H) * 400H + (low - 0DC00H) + 10000H;  
    ELSE
       RETURN Replacement;
    END;
-END SurrogatesToUChar;  
-  
-(*
-  Maybe add UTF8 utility functions to this module also
-*)
+END SurrogatesToUChar;
+
+
+
 
 END Unicode.
