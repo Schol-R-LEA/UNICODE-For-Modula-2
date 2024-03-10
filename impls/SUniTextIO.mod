@@ -23,6 +23,16 @@ FROM StringConvert IMPORT CardinalToString;
 FROM STextIO IMPORT WriteChar, WriteString, WriteLn;
 
 
+TYPE
+   CharSwitcher = (Modula, CLang);
+
+   Transfer = RECORD
+      tag: Case OF CharSwitcher
+         utf8buffer: UTF8Buffer |
+         c_wide: wxchar_t
+      END
+   END;
+
 PROCEDURE ReadUtf8Buffer(VAR utf8: UTF8Buffer): CARDINAL;
 BEGIN
    RETURN CodepointToUNICHAR(0);
@@ -31,6 +41,12 @@ END ReadUtf8Buffer;
 
 PROCEDURE WriteUtf8Buffer(utf8: UTF8Buffer);
 BEGIN
+   transfer: Transfer;
+
+   transfer.tag := Modula;
+   transfer.utf8buffer := utf8;
+   transfer.tag := CLang;
+   putwchar(transfer.c_wide);
 END WriteUtf8Buffer;
 
 

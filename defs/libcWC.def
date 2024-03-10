@@ -15,26 +15,10 @@ You should have received a copy of the GNU General Public License along
 with this package; see the file COPYING.  If not, write to the Free Software
 Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA. *)
 
-DEFINITION MODULE UTF8 ;
+DEFINITION MODULE FOR "C" libcWC;
 
-FROM SYSTEM IMPORT BYTE;
-FROM Unicode IMPORT UNICHAR, UCS4_codeunit, Replacement;
+EXPORT UNQUALIFIED wchar_t, putwchar;
 
-TYPE
-    UTF8Buffer = ARRAY [0..5] OF BYTE;
+PROCEDURE putwchar(wchar_t wc);
 
-
-PROCEDURE Utf8ToUnichar(utf8: UTF8Buffer; VAR ch: UNICHAR);
-(*
-   Utf8ToUnichar - Convert a buffer of UTF-8 charatcers
-                   to the internal UCS-4 format.
-*)
-
-
-PROCEDURE UnicharToUtf8(ch: UNICHAR; VAR utf8: UTF8Buffer);
-(*
-   UnicharToUtf8 - Convert the internal UCS-4 characters to
-                   a buffer of UTF-8 characters.
-*)
-
-END UTF8.
+END libcWC.

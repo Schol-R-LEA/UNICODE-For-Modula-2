@@ -31,7 +31,9 @@ DEFINITION MODULE Unicode ;
     Description: provides Unicode base types.
 *)
 
-CONST MaxUnicode = 10FFFFH;  (*maximum Unicode value *)
+CONST
+   MaxUnicode = 10FFFFH;  (*maximum Unicode value *)
+   Replacement = 0FFFDH;      (* Unicode REPLACEMENT CHARACTER *)
 
 TYPE
     UNICHAR = CARDINAL [0 .. MaxUnicode];   (* a single Unicode character *)

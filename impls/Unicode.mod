@@ -53,7 +53,6 @@ FROM DynamicStrings IMPORT String, InitString, CopyOut, Add, Fin;
 FROM StringConvert IMPORT CardinalToString;
 
 CONST
-   Replacement = 0FFFDH;      (* Unicode REPLACEMENT CHARACTER *)
    HighLower = 0D800H;
    HighUpper = 0DBFFH;  (* high surrogate range *)
    LowLower = 0DC00H;
