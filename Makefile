@@ -1,6 +1,6 @@
 CC_PATH=$(HOME)/opt/bin
 COMPILER=$(CC_PATH)/gm2
-FLAGS=-g -fiso
+FLAGS=-g -fiso -freport-bug
 INC=defs
 SRC=impls
 BIN=bin

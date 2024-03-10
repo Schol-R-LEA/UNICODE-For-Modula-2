@@ -19,6 +19,7 @@ Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA. *)
 IMPLEMENTATION MODULE UTF8;
 
 FROM Unicode IMPORT Replacement;
+FROM BitWordOps IMPORT WordOr, WordShr, WordShl;
 
 TYPE
    Octet = BITSET;
@@ -67,35 +68,48 @@ PROCEDURE Utf8ToUnichar(utf8: UTF8Buffer; VAR ch: UNICHAR);
    replaced with the REPLACEMENT CHAR.
 *)
 
+
 VAR
    edgeBit: SHORTCARD;
+   subChar: ARRAY [1..3] OF BITSET;    (* holds the sub-components of the character *)
+   i : CARDINAL;
+   octet: BITSET;
 
 BEGIN
    (* clear the output *)
    ch := 0;
 
+   octet := 0;
+
+   subChar[0] := 0;
+   FOR i := 1 TO 3 DO
+      octet := utf8[i];
+      subChar[i] := octet - {6..7};
+   END;
+
+
    (* Which is the last clear bit in the first byte? *)
    edgeBit := GetEdgeBit(utf8[0]);
 
+
+   ch := utf8[0] - {7 .. edgeBit};
+
    CASE edgeBit OF
       7:
-         (* A single-byte ASCII char, just use as-is *)
-         ch := utf8[0] |
+         (* A single-byte ASCII char, just use as-is *) |
       5:
+
          (* use two bytes for the value *)
-         ch := ByteShl(BitByteOps.GetBits(utf8[0], 0, 4), 6);
-         ch := WordOr(ch, utf8[1], 4) |
+         ch := WordOr(ch, WordShl(subChar[1], 6)); |
       4:
          (* use three bytes for the value *)
-         ch := ByteShl(BitByteOps.GetBits(utf8[0], 0, 3), 12);
-         ch := WordOr(ch, ByteShl(GetExtChar(utf8[1], 6)));
-         ch := WordOr(ch, utf8[2]) |
+         ch := WordOr(ch, WordShl(subChar[1], 6));
+         ch := WordOr(ch, WordShl(subChar[2], 12)); |
       3:
          (* use four bytes for the value *)
-         ch := ByteShl(BitByteOps.GetBits(utf8[0], 0, 3), 18);
-         ch := WordOr(ch, ByteShl(GetExtChar(utf8[1], 12)));
-         ch := WordOr(ch, ByteShl(GetExtChar(utf8[2], 6)));
-         ch := WordOr(ch, utf8[3])
+         ch := WordOr(ch, WordShl(subChar[1], 6));
+         ch := WordOr(ch, WordShl(subChar[2], 12));
+         ch := WordOr(ch, WordShl(subChar[3], 18));
    ELSE
       (* should never happen, return the REPLACEMENT CHAR *)
       ch := Replacement;
@@ -109,26 +123,30 @@ PROCEDURE UnicharToUtf8(ch: UNICHAR; VAR utf8: UTF8Buffer);
    UnicharToUtf8 - Convert the internal UCS-4 characters to
                    a buffer of UTF-8 characters.
 *)
-
-CONST
-   MaxCardinal = 0FFFFFFFFH;
+VAR
+   i : CARDINAL;
 
 BEGIN
+
+   FOR i := 0 TO 3 DO
+      utf8[i] := 0;
+   END;
+
    CASE ch OF
       0 .. 07FH:
          utf8[0] := ch; |
       080FH .. 07FFH:
-         utf8[0] := ch - {MaxCardinal, 6};
-         utf8[1] := ch - {0, 6} |
+         utf8[0] := ch - {6..31};
+         utf8[1] := extMask + (WordShr(ch, 6) - {6..31})|
       0800H .. 00FFFFH:
-         utf8[0] := BitByteOps.ByteOr(preambleMask[2], GetBits(ch, 0, 5));
-         utf8[1] := BitByteOps.ByteOr(extMask, GetBits(ch, 8, 13));
-         utf8[2] := BitByteOps.ByteOr(extMask, GetBits(ch, 14, 21)); |
+         utf8[0] := ch - {5..31};
+         utf8[1] := extMask + (WordShr(ch, 5) - {6..31});
+         utf8[2] := extMask + (WordShr(ch, 13) - {6..31}); |
       010000H .. 010FFFFH:
-         utf8[0] := BitByteOps.ByteOr(preambleMask[3], GetBits(ch, 0, 5));
-         utf8[1] := BitByteOps.ByteOr(extMask, GetBits(ch, 8, 13));
-         utf8[2] := BitByteOps.ByteOr(extMask, GetBits(ch, 12, 21));
-         utf8[3] := BitByteOps.ByteOr(extMask, GetBits(ch, 22, 30))
+         utf8[0] := ch - {4..31};
+         utf8[1] := extMask + (WordShr(ch, 4) - {6..31});
+         utf8[2] := extMask + (WordShr(ch, 12) - {6..31});
+         utf8[3] := extMask + (WordShr(ch, 20) - {6..31}); |
    ELSE
       (* TODO *)
    END;
