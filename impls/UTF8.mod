@@ -18,20 +18,17 @@ Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA. *)
 
 IMPLEMENTATION MODULE UTF8;
 
-FROM Unicode IMPORT Replacement;
+FROM Unicode IMPORT Replacement, CodepointToUNICHAR;
 FROM BitWordOps IMPORT WordOr, WordShr, WordShl;
-
-TYPE
-   Octet = BITSET;
 
 
 CONST
    extMask = 0C0H;
 
 
-PROCEDURE GetEdgeBit(b: BYTE): SHORTCARD;
+PROCEDURE GetEdgeBit(b: Octet): CARDINAL;
 VAR
-   bit: SHORTCARD;
+   bit: CARDINAL;
 
 BEGIN
    FOR bit := 7 TO 0 BY -1 DO
@@ -42,10 +39,10 @@ BEGIN
 END GetEdgeBit;
 
 
-PROCEDURE GetExtChar(b: BYTE): BYTE;
+PROCEDURE GetSubChar(b: Octet): Octet;
 BEGIN
-   RETURN b - {7, 6};
-END GetExtChar;
+   RETURN b - {6..7};
+END GetSubChar;
 
 
 PROCEDURE Utf8ToUnichar(utf8: UTF8Buffer; VAR ch: UNICHAR);
@@ -70,21 +67,17 @@ PROCEDURE Utf8ToUnichar(utf8: UTF8Buffer; VAR ch: UNICHAR);
 
 
 VAR
-   edgeBit: SHORTCARD;
-   subChar: ARRAY [1..3] OF BITSET;    (* holds the sub-components of the character *)
+   edgeBit: CARDINAL;
+   subChar: ARRAY [0..3] OF Octet;    (* holds the sub-components of the character *)
    i : CARDINAL;
-   octet: BITSET;
 
 BEGIN
    (* clear the output *)
    ch := 0;
 
-   octet := 0;
-
    subChar[0] := 0;
    FOR i := 1 TO 3 DO
-      octet := utf8[i];
-      subChar[i] := octet - {6..7};
+      subChar[i] := GetSubChar(utf8[i]);
    END;
 
 
@@ -98,7 +91,6 @@ BEGIN
       7:
          (* A single-byte ASCII char, just use as-is *) |
       5:
-
          (* use two bytes for the value *)
          ch := WordOr(ch, WordShl(subChar[1], 6)); |
       4:
@@ -114,7 +106,6 @@ BEGIN
       (* should never happen, return the REPLACEMENT CHAR *)
       ch := Replacement;
    END;
-
 END Utf8ToUnichar;
 
 
@@ -134,23 +125,22 @@ BEGIN
 
    CASE ch OF
       0 .. 07FH:
-         utf8[0] := ch; |
+         utf8[0] := ch |
       080FH .. 07FFH:
          utf8[0] := ch - {6..31};
-         utf8[1] := extMask + (WordShr(ch, 6) - {6..31})|
+         utf8[1] := extMask + (WordShr(ch, 6) - {6..31}) |
       0800H .. 00FFFFH:
          utf8[0] := ch - {5..31};
          utf8[1] := extMask + (WordShr(ch, 5) - {6..31});
-         utf8[2] := extMask + (WordShr(ch, 13) - {6..31}); |
+         utf8[2] := extMask + (WordShr(ch, 13) - {6..31}) |
       010000H .. 010FFFFH:
          utf8[0] := ch - {4..31};
          utf8[1] := extMask + (WordShr(ch, 4) - {6..31});
          utf8[2] := extMask + (WordShr(ch, 12) - {6..31});
-         utf8[3] := extMask + (WordShr(ch, 20) - {6..31}); |
+         utf8[3] := extMask + (WordShr(ch, 20) - {6..31}) |
    ELSE
       (* TODO *)
    END;
 END UnicharToUtf8;
-
 
 END UTF8.

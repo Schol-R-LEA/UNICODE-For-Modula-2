@@ -113,7 +113,7 @@ BEGIN
       if the locale is a code-switching set, or EBCDIC or something,
       then you get what you get, and should not be claiming it covers ASCII.
    *)
-   IF IsPrintableASCII(cp) THEN
+   IF Is7BitPrintable(cp) THEN
       RETURN cp;
    ELSE
       RETURN Replacement;
@@ -138,19 +138,6 @@ BEGIN
    END;
 END CodepointToUNICHAR;
 
-PROCEDURE IsPrintableASCII (cu: UCS4_codeunit): BOOLEAN;
-(*
-   IsPrintableASCII - returns true if the UCS4_codeunit, cu, corresponds to
-                   an ASCII character. Otherwise returns false.
-*)
-
-BEGIN
-   IF (cu >= 32) AND (cu <= 127) THEN
-      RETURN TRUE;
-   ELSE
-      RETURN FALSE;
-   END;
-END IsPrintableASCII;
 
 
 PROCEDURE IsBMP (cu: UCS4_codeunit): BOOLEAN;
@@ -223,6 +210,32 @@ BEGIN
    Fin(value);
    Fin(open);
 END CodepointToString;
+
+
+PROCEDURE UCHR (n : CARDINAL) : UNICHAR;
+(* Returns a UNICHAR value for code point n *)
+BEGIN
+   RETURN CodepointToUNICHAR(n);
+END UCHR;
+
+
+PROCEDURE Is7BitPrintable (ch: UNICHAR): BOOLEAN;
+(* Returns TRUE if ch represents a 7-bit printable character, else FALSE *)
+BEGIN
+   RETURN (ch > 31) AND (ch < 128);
+END Is7BitPrintable;
+
+
+PROCEDURE charFromUnichar (ch: UNICHAR): CHAR;
+(* Converts a UNICHAR value to type CHAR if ch is a 7-bit printable,
+    causes a runtime error if ch does not represent a 7-bit printable *)
+BEGIN
+   IF Is7BitPrintable(ch) THEN
+      RETURN CHR(ch);
+   ELSE
+      (* TODO *);
+   END;
+END charFromUnichar;
 
 
 END Unicode.

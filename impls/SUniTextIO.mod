@@ -18,9 +18,7 @@ Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA. *)
 IMPLEMENTATION MODULE SUniTextIO ;
 
 FROM Unicode IMPORT UNICHAR, UCS4_codeunit, CodepointToUNICHAR;
-FROM DynamicStrings IMPORT CopyOut;
-FROM StringConvert IMPORT CardinalToString;
-FROM STextIO IMPORT WriteChar, WriteString, WriteLn;
+
 
 
 TYPE

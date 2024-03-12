@@ -20,7 +20,7 @@ MODULE TestUCS4Repr;
 
 FROM Unicode IMPORT UNICHAR, UCS4_codeunit, IsUnicode,
                     CharToUNICHAR,
-                    IsPrintableASCII, ASCIIToUNICHAR,
+                    Is7BitPrintable, ASCIIToUNICHAR,
                     CodepointToUNICHAR, CodepointToString,
                     IsBMP, BMPToUNICHAR, SurrogatesToUNICHAR;
 
@@ -35,7 +35,7 @@ VAR
 
    PROCEDURE TestIsASCII(uc: UNICHAR);
    BEGIN
-      IF IsPrintableASCII(uc) THEN
+      IF Is7BitPrintable(uc) THEN
          WriteString(" is ");
       ELSE
          WriteString(" is not ");

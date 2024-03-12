@@ -17,12 +17,11 @@ Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA. *)
 
 DEFINITION MODULE UTF8 ;
 
-FROM SYSTEM IMPORT BYTE;
-FROM Unicode IMPORT UNICHAR, UCS4_codeunit, Replacement;
-
+FROM Unicode IMPORT UNICHAR, UCS4_codeunit;
 
 TYPE
-    UTF8Buffer = ARRAY [0..3] OF BYTE;
+   Octet = PACKEDSET OF CARDINAL [0 .. 0FFH];
+   UTF8Buffer = ARRAY [0..3] OF Octet;
 
 
 PROCEDURE Utf8ToUnichar(utf8: UTF8Buffer; VAR ch: UNICHAR);

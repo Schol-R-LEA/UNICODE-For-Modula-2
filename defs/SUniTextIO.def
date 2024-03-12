@@ -19,7 +19,7 @@ DEFINITION MODULE SUniTextIO ;
 
 FROM Unicode IMPORT UNICHAR, UCS4_codeunit;
 FROM UTF8 IMPORT UTF8Buffer;
-FROM libcWC IMPORT putwchar;
+FROM libcWC IMPORT getwchar, putwchar;
 
 PROCEDURE ReadUtf8Buffer(VAR utf8: UTF8Buffer): CARDINAL;
 

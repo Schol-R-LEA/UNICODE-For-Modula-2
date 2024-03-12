@@ -85,18 +85,20 @@ PROCEDURE ASCIIToUNICHAR (a: CHAR): UNICHAR;
 *)
 
 PROCEDURE CodepointToUNICHAR (cp: CARDINAL): UNICHAR;
-(* 
+(*
    CodepointToUNICHAR -   converts a numeric codepoint, cp, into a
                    Unicode character. For example the cardinal 3608, which
                    has the hexadecimal representation 0E18H, would return
                    the Unicode character THAI CHARACTER THO THONG.
 *)
 
+PROCEDURE UCHR (n : CARDINAL) : UNICHAR;
+(* Returns a UNICHAR value for code point n *)
 
-PROCEDURE IsPrintableASCII (cu: UCS4_codeunit): BOOLEAN;
+PROCEDURE Is7BitPrintable (ch: UNICHAR): BOOLEAN;
 (*
-   IsPrintableASCII -     returns true if the UCS4_codeunit, cu, corresponds to
-                   an ASCII character. Otherwise returns false.
+   Is7BitPrintable -   Returns TRUE if ch represents a 7-bit
+                     printable character, else FALSE
 *)
 
 PROCEDURE IsBMP (cu: UCS4_codeunit): BOOLEAN;
