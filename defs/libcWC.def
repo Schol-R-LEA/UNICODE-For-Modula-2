@@ -17,8 +17,13 @@ Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA. *)
 
 DEFINITION MODULE FOR "C" libcWC;
 
-EXPORT UNQUALIFIED wchar_t, putwchar;
+EXPORT UNQUALIFIED wchar_t, putwchar, getwchar;
 
-PROCEDURE putwchar(wchar_t wc);
+TYPE
+   wchar_t;
+
+PROCEDURE putwchar(wc: wchar_t);
+
+PROCEDURE getwchar(): wchar_t;
 
 END libcWC.

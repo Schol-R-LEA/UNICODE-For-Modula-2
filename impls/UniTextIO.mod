@@ -15,41 +15,48 @@ You should have received a copy of the GNU General Public License along
 with this package; see the file COPYING.  If not, write to the Free Software
 Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA. *)
 
-IMPLEMENTATION MODULE SUniTextIO ;
+IMPLEMENTATION MODULE UniTextIO ;
 
-FROM libcWC IMPORT wchar_t, getwchar, putwchar;
+IMPORT IOChan;
+FROM WholeIO IMPORT WriteCard, ReadCard;
 FROM Unicode IMPORT CodepointToUNICHAR;
 
-
 TYPE
-   CharSwitcher = (Modula2, CLang);
+   Switcher = (Utf8, Card);
 
    Transfer = RECORD
-      CASE tag: CharSwitcher OF
-         Modula2:
+      CASE tag: Switcher OF
+         Utf8:
             utf8: UTF8Buffer |
-         CLang:
-         c_wide: wchar_t
-      END
+         Card:
+            card: CARDINAL
+     END
    END;
 
 
-PROCEDURE ReadUtf8Buffer(VAR utf8: UTF8Buffer): CARDINAL;
-BEGIN
-   RETURN CodepointToUNICHAR(0);
-END ReadUtf8Buffer;
-
-
-PROCEDURE WriteUtf8Buffer(utf8: UTF8Buffer);
+PROCEDURE ReadUtf8Buffer(cid: IOChan.ChanId; VAR utf8: UTF8Buffer);
 VAR
    transfer: Transfer;
 
 BEGIN
-   transfer.tag := Modula2;
+
+   transfer.tag := Card;
+   ReadCard(cid, transfer.card);
+   transfer.tag := Utf8;
+   utf8 := transfer.utf8;
+END ReadUtf8Buffer;
+
+
+PROCEDURE WriteUtf8Buffer(cid: IOChan.ChanId; utf8: UTF8Buffer; width: CARDINAL);
+VAR
+   transfer: Transfer;
+
+BEGIN
+   transfer.tag := Utf8;
    transfer.utf8 := utf8;
-   transfer.tag := CLang;
-   putwchar(transfer.c_wide);
+   transfer.tag := Card;
+
+   WriteCard(cid, transfer.card, width);
 END WriteUtf8Buffer;
 
-
-END SUniTextIO.
+END UniTextIO.
