@@ -6,7 +6,7 @@ SRC=impls
 BIN=bin
 TESTS=tests
 
-testucs4repr: unicode utf8 uintextio $(TESTS)/TestUCS4Repr.mod
+testucs4repr: unicode utf8 unitextio $(TESTS)/TestUCS4Repr.mod
 	$(COMPILER) $(FLAGS) -I$(INC)/ $(TESTS)/TestUCS4Repr.mod \
 	$(BIN)/Unicode.o $(BIN)/UTF8.o $(BIN)/UniTextIO.o \
 	-o $(BIN)/TestUCS4Repr
