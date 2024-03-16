@@ -24,16 +24,13 @@ FROM Unicode IMPORT UNICHAR, UCS4_codeunit, IsUnicode,
                     CodepointToUNICHAR, CodepointToString,
                     IsBMP, BMPToUNICHAR, SurrogatesToUNICHAR;
 
-IMPORT IOChan, StdChans;
 FROM STextIO IMPORT WriteChar, WriteString, WriteLn;
 FROM SWholeIO IMPORT WriteCard;
 FROM DynamicStrings IMPORT CopyOut;
 FROM UTF8 IMPORT UTF8Buffer;
-FROM UniTextIO IMPORT WriteUtf8Buffer;
+FROM SUniTextIO IMPORT WriteUtf8Buffer;
 
 VAR
-   out: IOChan.ChanId;
-
    a: ARRAY [0..15] OF UNICHAR;
    i: CARDINAL;
 
@@ -68,7 +65,7 @@ BEGIN
    UnicharToUtf8(uc, ubuffer);
 
    WriteChar("'");
-   Write(out, ubuffer, 1);
+   WriteUtf8Buffer(ubuffer, 1);
    WriteString("' ");
 
    CodepointToString(uc, buffer);
@@ -86,8 +83,6 @@ BEGIN
 END TestUnichar;
 
 BEGIN
-   out := StdChans.StdOutChan();
-
    a[0] := CharToUNICHAR('a');         (* a CHAR which is a BMP codepoint *)
    a[1] := ASCIIToUNICHAR('a');        (* an ASCII char which is a BMP codepoint *)
    a[2] := CodepointToUNICHAR(ORD('a'));

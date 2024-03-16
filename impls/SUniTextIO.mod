@@ -15,40 +15,19 @@ You should have received a copy of the GNU General Public License along
 with this package; see the file COPYING.  If not, write to the Free Software
 Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA. *)
 
-IMPLEMENTATION MODULE SUniTextIO ;
+IMPLEMENTATION MODULE SUniTextIO;
 
-FROM libcWC IMPORT wchar_t, getwchar, putwchar;
-FROM Unicode IMPORT CodepointToUNICHAR;
+IMPORT IOChan, StdChans, UniTextIO;
 
-
-TYPE
-   CharSwitcher = (Modula2, CLang);
-
-   Transfer = RECORD
-      CASE tag: CharSwitcher OF
-         Modula2:
-            utf8: UTF8Buffer |
-         CLang:
-         c_wide: wchar_t
-      END
-   END;
-
-
-PROCEDURE ReadUtf8Buffer(VAR utf8: UTF8Buffer): CARDINAL;
+PROCEDURE ReadUtf8Buffer(VAR utf8: UTF8Buffer);
 BEGIN
-   RETURN CodepointToUNICHAR(0);
+   UniTextIO.ReadUtf8Buffer(StdChans.StdInChan(), utf8);
 END ReadUtf8Buffer;
 
 
-PROCEDURE WriteUtf8Buffer(utf8: UTF8Buffer);
-VAR
-   transfer: Transfer;
-
+PROCEDURE WriteUtf8Buffer(utf8: UTF8Buffer; width: CARDINAL);
 BEGIN
-   transfer.tag := Modula2;
-   transfer.utf8 := utf8;
-   transfer.tag := CLang;
-   putwchar(transfer.c_wide);
+   UniTextIO.WriteUtf8Buffer(StdChans.StdOutChan(), utf8, width);
 END WriteUtf8Buffer;
 
 

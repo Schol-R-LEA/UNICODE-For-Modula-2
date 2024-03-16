@@ -20,8 +20,8 @@ DEFINITION MODULE SUniTextIO ;
 FROM Unicode IMPORT UNICHAR, UCS4_codeunit;
 FROM UTF8 IMPORT UTF8Buffer;
 
-PROCEDURE ReadUtf8Buffer(VAR utf8: UTF8Buffer): CARDINAL;
+PROCEDURE ReadUtf8Buffer(VAR utf8: UTF8Buffer);
 
-PROCEDURE WriteUtf8Buffer(utf8: UTF8Buffer);
+PROCEDURE WriteUtf8Buffer(utf8: UTF8Buffer; width: CARDINAL);
 
 END SUniTextIO.
