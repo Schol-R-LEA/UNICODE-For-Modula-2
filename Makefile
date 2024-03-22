@@ -10,7 +10,7 @@ SRC      := impls
 OBJ      := objs
 BIN      := bin
 TESTS    := tests
-
+BITWISE  := CardBitOps
 
 testucs4repr: unicode utf8 sunitextio $(TESTS)/TestUCS4Repr.mod
 	$(COMPILER) $(FLAGS) -I$(INC)/ $(TESTS)/TestUCS4Repr.mod \
@@ -27,8 +27,9 @@ unitextio: unicode utf8 $(SRC)/UniTextIO.mod $(INC)/UniTextIO.def
 	-o $(OBJ)/UniTextIO.o
 
 
-utf8: unicode $(SRC)/UTF8.mod $(INC)/UTF8.def
-	$(COMPILER) $(FLAGS) -I$(INC)/ -c $(SRC)/UTF8.mod \
+utf8: unicode $(SRC)/UTF8.mod $(INC)/UTF8.def $(BITWISE)/$(INC)/CardBitOps.def
+	$(COMPILER) $(FLAGS) -I$(INC)/ -I$(BITWISE)/$(INC)/ \
+	-c $(SRC)/UTF8.mod $(BITWISE)/gnu/x86/CardBitOps.o \
 	-o $(OBJ)/UTF8.o
 
 
