@@ -89,12 +89,11 @@ BEGIN
 
    (* Which is the last clear bit in the first byte? *)
    edgeBit := GetEdgeBit(utf8[0]);
-
+   ch := utf8[0];
 
    CASE edgeBit OF
       7:
-         (* A single-byte ASCII char, just use as-is *) 
-         ch := utf8[0] |
+         (* A single-byte ASCII char, just use as-is *) |
       5:
          (* use two bytes for the value *)
          ch := bwOr(ch, shl(subChar[1], 6)); |
