@@ -18,18 +18,21 @@ Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA. *)
 IMPLEMENTATION MODULE UniTextIO ;
 
 IMPORT IOChan;
+FROM TextIO IMPORT WriteChar;
 FROM WholeIO IMPORT WriteCard, ReadCard;
 FROM Unicode IMPORT CodepointToUNICHAR;
 
 TYPE
-   Switcher = (Utf8, Card);
+   Switcher = (Utf8, Card, Char);
 
    Transfer = RECORD
       CASE tag: Switcher OF
          Utf8:
             utf8: UTF8Buffer |
          Card:
-            card: CARDINAL
+            card: CARDINAL; |
+         Char:
+            ch: CHAR
      END
    END;
 
@@ -39,7 +42,6 @@ VAR
    transfer: Transfer;
 
 BEGIN
-
    transfer.tag := Card;
    ReadCard(cid, transfer.card);
    transfer.tag := Utf8;
@@ -47,16 +49,16 @@ BEGIN
 END ReadUtf8Buffer;
 
 
-PROCEDURE WriteUtf8Buffer(cid: IOChan.ChanId; utf8: UTF8Buffer; width: CARDINAL);
+PROCEDURE WriteUtf8Buffer(cid: IOChan.ChanId; utf8: UTF8Buffer);
 VAR
    transfer: Transfer;
 
 BEGIN
    transfer.tag := Utf8;
    transfer.utf8 := utf8;
-   transfer.tag := Card;
+   transfer.tag := Char;
 
-   WriteCard(cid, transfer.card, width);
+   WriteChar(cid, transfer.ch);
 END WriteUtf8Buffer;
 
 END UniTextIO.

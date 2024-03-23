@@ -18,8 +18,8 @@ Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA. *)
 
 IMPLEMENTATION MODULE UTF8;
 
-FROM Unicode IMPORT Replacement, CodepointToUNICHAR;
-FROM CardBitOps IMPORT bit, shl, shr, bwAnd, bwNot, ClearMSBtoN;
+FROM Unicode IMPORT MaxUnicode, Replacement, CodepointToUNICHAR;
+FROM CardBitOps IMPORT bit, shl, shr, bwAnd, bwNot, bwOr, ClearLSBtoN, ClearMSBtoN;
 
 
 CONST
@@ -32,7 +32,7 @@ VAR
 
 BEGIN
    FOR index := 7 TO 0 BY -1 DO
-      IF bit(b, index) THEN
+      IF NOT bit(b, index) THEN
           RETURN index;
       END;
    END;
@@ -74,7 +74,7 @@ PROCEDURE Utf8ToUnichar(utf8: UTF8Buffer; VAR ch: UNICHAR);
 VAR
    edgeBit: CARDINAL;
    subChar: UTF8Buffer;    (* holds the sub-components of the character *)
-   index, temp : CARDINAL;
+   index, component : CARDINAL;
 
 
 BEGIN
@@ -91,23 +91,22 @@ BEGIN
    edgeBit := GetEdgeBit(utf8[0]);
 
 
-   ch := ClearMSBtoN(utf8[0], edgeBit);
-
    CASE edgeBit OF
       7:
-         (* A single-byte ASCII char, just use as-is *) |
+         (* A single-byte ASCII char, just use as-is *) 
+         ch := utf8[0] |
       5:
          (* use two bytes for the value *)
-         ch := ch + shl(subChar[1], 6); |
+         ch := bwOr(ch, shl(subChar[1], 6)); |
       4:
          (* use three bytes for the value *)
-         ch := ch + shl(subChar[1], 6);
-         ch := ch + shl(subChar[2], 12); |
+         ch := bwOr(ch, shl(subChar[1], 6));
+         ch := bwOr(ch, shl(subChar[2], 12)); |
       3:
          (* use four bytes for the value *)
-         ch := ch + shl(subChar[1], 6);
-         ch := ch + shl(subChar[2], 12);
-         ch := ch + shl(subChar[3], 18);
+         ch := bwOr(ch, shl(subChar[1], 6));
+         ch := bwOr(ch, shl(subChar[2], 12));
+         ch := bwOr(ch, shl(subChar[3], 18));
    ELSE
       (* should never happen, return the REPLACEMENT CHAR *)
       ch := Replacement;
@@ -122,39 +121,42 @@ PROCEDURE UnicharToUtf8(ch: UNICHAR; VAR utf8: UTF8Buffer);
 *)
 VAR
    index : CARDINAL;
-   component: Octet;
+   component: CARDINAL;
 
 BEGIN
 
    FOR index := 0 TO 3 DO
-      utf8[index] := 0;
+      utf8[index] := 0
    END;
+
+   component := ch;  (* initialize the first byte *)
+   ClearMSBtoN(component, 8);
+   utf8[0] := component;
 
    CASE ch OF
       0 .. 07FH:
-         utf8[0] := ch |
+         (* nop *) |
       080FH .. 07FFH:
-         utf8[0] := ch;
-         ClearLSBtoN(utf8[0], 6);
-         component := ch;
-         ClearLSBtoN(component, 6);
-         utf8[1] := bwOr(extMask, ClearMSBtoN(shr(component, 6), 6)) |
+         ClearMSBtoN(utf8[0], 6);
+         component := shr(ch, 6);
+         ClearMSBtoN(component, 8);
+         utf8[1] := bwOr(component, extMask) |
       0800H .. 00FFFFH:
-         utf8[0] := ch;
          ClearMSBtoN(utf8[0], 5);
-         component := ch;
-         ClearMSBtoN(component, 5);
-         utf8[1] := bwOr(extMask, ClearMSBtoN(shr(component, 5), 6);
-         component := ClearLSBtoN(ch - {0..12};
-         utf8[2] := extMask + ClearMSBtoN(shr(component, 13), 6) |
+         component := shr(ch, 5);
+         ClearMSBtoN(component, 8);
+         utf8[1] := bwOr(component, extMask);
+         component := shr(ch, 13);
+         ClearMSBtoN(component, 8);
+         utf8[2] := bwOr(component, extMask) |
       010000H .. 010FFFFH:
-         utf8[0] := ClearMSBtoN(ch, 4);
-         component := ClearLSBtoN(ch, 4);
-         utf8[1] := extMask + ClearMSBtoN(shr(component, 4), 6);
-         component := ClearLSBtoN(ch, 11);
-         utf8[2] := extMask + ClearMSBtoN(shr(component, 12), 6);
-         component := ClearLSBtoN(ch, 19);
-         utf8[3] := extMask + ClearMSBtoN(shr(component, 20), 6) |
+         ClearMSBtoN(utf8[0], 4);
+         component := shr(ch, 4);
+         ClearMSBtoN(component, 8);
+         utf8[1] := bwOr(component, extMask);
+         component := shr(ch, 13);
+         ClearMSBtoN(component, 8);
+         utf8[2] := bwOr(component, extMask) |
    ELSE
       (* TODO *)
    END;

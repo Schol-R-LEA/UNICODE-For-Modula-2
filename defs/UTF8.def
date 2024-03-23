@@ -20,7 +20,7 @@ DEFINITION MODULE UTF8 ;
 FROM Unicode IMPORT UNICHAR, UCS4_codeunit;
 
 TYPE
-   Octet = PACKEDSET OF CARDINAL [0 .. 0FFH];
+   Octet = CARDINAL [0 .. 0FFH];
    UTF8Buffer = ARRAY [0..3] OF Octet;
 
 

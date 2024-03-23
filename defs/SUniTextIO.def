@@ -22,6 +22,6 @@ FROM UTF8 IMPORT UTF8Buffer;
 
 PROCEDURE ReadUtf8Buffer(VAR utf8: UTF8Buffer);
 
-PROCEDURE WriteUtf8Buffer(utf8: UTF8Buffer; width: CARDINAL);
+PROCEDURE WriteUtf8Buffer(utf8: UTF8Buffer);
 
 END SUniTextIO.

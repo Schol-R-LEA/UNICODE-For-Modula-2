@@ -14,7 +14,8 @@ BITWISE  := CardBitOps
 
 testucs4repr: unicode utf8 sunitextio $(TESTS)/TestUCS4Repr.mod
 	$(COMPILER) $(FLAGS) -I$(INC)/ $(TESTS)/TestUCS4Repr.mod \
-	$(OBJ)/Unicode.o $(OBJ)/UTF8.o $(OBJ)/UniTextIO.o \
+	$(OBJ)/Unicode.o $(OBJ)/UTF8.o $(OBJ)/UniTextIO.o $(OBJ)/SUniTextIO.o \
+	$(BITWISE)/$(OBJ)/gnu/x86/CardBitOps.o \
 	-o $(BIN)/TestUCS4Repr
 
 
@@ -29,7 +30,7 @@ unitextio: unicode utf8 $(SRC)/UniTextIO.mod $(INC)/UniTextIO.def
 
 utf8: unicode $(SRC)/UTF8.mod $(INC)/UTF8.def $(BITWISE)/$(INC)/CardBitOps.def
 	$(COMPILER) $(FLAGS) -I$(INC)/ -I$(BITWISE)/$(INC)/ \
-	-c $(SRC)/UTF8.mod $(BITWISE)/gnu/x86/CardBitOps.o \
+	-c $(SRC)/UTF8.mod \
 	-o $(OBJ)/UTF8.o
 
 

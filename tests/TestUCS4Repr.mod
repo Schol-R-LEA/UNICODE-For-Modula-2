@@ -27,7 +27,7 @@ FROM Unicode IMPORT UNICHAR, UCS4_codeunit, IsUnicode,
 FROM STextIO IMPORT WriteChar, WriteString, WriteLn;
 FROM SWholeIO IMPORT WriteCard;
 FROM DynamicStrings IMPORT CopyOut;
-FROM UTF8 IMPORT UTF8Buffer;
+FROM UTF8 IMPORT UTF8Buffer, UnicharToUtf8, Utf8ToUnichar;
 FROM SUniTextIO IMPORT WriteUtf8Buffer;
 
 VAR
@@ -60,12 +60,13 @@ PROCEDURE TestUnichar(uc: UNICHAR);
 VAR
    buffer: ARRAY [0..31] OF CHAR;
    ubuffer: UTF8Buffer;
+   convert: UNICHAR;
 
 BEGIN
    UnicharToUtf8(uc, ubuffer);
 
    WriteChar("'");
-   WriteUtf8Buffer(ubuffer, 1);
+   WriteUtf8Buffer(ubuffer);
    WriteString("' ");
 
    CodepointToString(uc, buffer);
@@ -80,7 +81,19 @@ BEGIN
 
    TestIsASCII(uc);
    TestIsBMP(uc);
+
+   WriteString(" -> ");
+   Utf8ToUnichar(ubuffer, convert);
+   WriteCard(convert, 1);
+   WriteString(" -> ");
+   WriteChar("'");
+   UnicharToUtf8(convert, ubuffer);
+   WriteUtf8Buffer(ubuffer);
+   WriteString("' ");
+
 END TestUnichar;
+
+
 
 BEGIN
    a[0] := CharToUNICHAR('a');         (* a CHAR which is a BMP codepoint *)
@@ -103,5 +116,4 @@ BEGIN
       TestUnichar(a[i]);
       WriteLn;
    END;
-
 END TestUCS4Repr.

@@ -25,9 +25,9 @@ BEGIN
 END ReadUtf8Buffer;
 
 
-PROCEDURE WriteUtf8Buffer(utf8: UTF8Buffer; width: CARDINAL);
+PROCEDURE WriteUtf8Buffer(utf8: UTF8Buffer);
 BEGIN
-   UniTextIO.WriteUtf8Buffer(StdChans.StdOutChan(), utf8, width);
+   UniTextIO.WriteUtf8Buffer(StdChans.StdOutChan(), utf8);
 END WriteUtf8Buffer;
 
 
