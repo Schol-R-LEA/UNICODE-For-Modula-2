@@ -50,6 +50,33 @@ BEGIN
 END GetSubChar;
 
 
+PROCEDURE BufferSize(utf8: UTF8Buffer): BufferByteCount;
+(*
+   BufferSize - get the effective size of the UTF-8 character in bytes.
+*)
+VAR
+   edgeBit: CARDINAL;
+
+
+BEGIN
+   (* Which is the last clear bit in the first byte? *)
+   edgeBit := GetEdgeBit(utf8[0]);
+
+   CASE edgeBit OF
+      7:
+         RETURN 1 |
+      5:
+         RETURN 2 |
+      4:
+         RETURN 3 |
+      3:
+         RETURN 4 |
+   ELSE
+      (* TODO *)
+   END;
+END BufferSize;
+
+
 PROCEDURE Utf8ToUnichar(utf8: UTF8Buffer; VAR ch: UNICHAR);
 (*
    Utf8ToUnichar - Convert a buffer of UTF-8 characters

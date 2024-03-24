@@ -4,7 +4,7 @@ AUX      := Makefile README.md LICENSE .gitignore
 
 CC_PATH  := $(HOME)/opt/bin
 COMPILER := $(CC_PATH)/gm2
-FLAGS    := -g
+FLAGS    := -g -fiso
 INC      := defs
 SRC      := impls
 OBJ      := objs

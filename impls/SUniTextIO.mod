@@ -17,17 +17,67 @@ Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA. *)
 
 IMPLEMENTATION MODULE SUniTextIO;
 
-IMPORT IOChan, StdChans, UniTextIO;
+IMPORT SYSTEM;
+FROM SRawIO IMPORT Read, Write;
+FROM UTF8 IMPORT UTF8Buffer, BufferByteCount, BufferSize;
+
+VAR
+   arr1: ARRAY [0..0] OF SYSTEM.LOC;
+   arr2: ARRAY [0..1] OF SYSTEM.LOC;
+   arr3: ARRAY [0..2] OF SYSTEM.LOC;
+   arr4: ARRAY [0..3] OF SYSTEM.LOC;
 
 PROCEDURE ReadUtf8Buffer(VAR utf8: UTF8Buffer);
 BEGIN
-   UniTextIO.ReadUtf8Buffer(StdChans.StdInChan(), utf8);
+   Read(arr1);
+
+   utf8[0] := SYSTEM.CAST(CARDINAL, arr1[0]);
+
+   CASE BufferSize(utf8) OF
+      1:
+         (* do nothing *) |
+      2:
+         Read(arr1);
+         utf8[1] := SYSTEM.CAST(CARDINAL, arr1[0]);
+         utf8[2] := 0;
+         utf8[3] := 0   |
+      3:
+         Read(arr2);
+         utf8[1] := SYSTEM.CAST(CARDINAL, arr2[0]);
+         utf8[2] := SYSTEM.CAST(CARDINAL, arr2[1]);
+         utf8[3] := 0;  |
+      4:
+         Read(arr3);
+         utf8[1] := SYSTEM.CAST(CARDINAL, arr3[0]);
+         utf8[2] := SYSTEM.CAST(CARDINAL, arr3[1]);
+         utf8[3] := SYSTEM.CAST(CARDINAL, arr3[2])
+   END;
+
 END ReadUtf8Buffer;
 
 
 PROCEDURE WriteUtf8Buffer(utf8: UTF8Buffer);
 BEGIN
-   UniTextIO.WriteUtf8Buffer(StdChans.StdOutChan(), utf8);
+   CASE BufferSize(utf8) OF
+      1:
+         arr1[0] := SYSTEM.CAST(SYSTEM.LOC, utf8[0]);
+         Write(arr1)  |
+      2:
+         arr2[0] := SYSTEM.CAST(SYSTEM.LOC, utf8[0]);
+         arr2[1] := SYSTEM.CAST(SYSTEM.LOC, utf8[1]);
+         Write(arr2)  |
+      3:
+         arr3[0] := SYSTEM.CAST(SYSTEM.LOC, utf8[0]);
+         arr3[1] := SYSTEM.CAST(SYSTEM.LOC, utf8[1]);
+         arr3[2] := SYSTEM.CAST(SYSTEM.LOC, utf8[2]);
+         Write(arr3)  |
+      4:
+         arr4[0] := SYSTEM.CAST(SYSTEM.LOC, utf8[0]);
+         arr4[1] := SYSTEM.CAST(SYSTEM.LOC, utf8[1]);
+         arr4[2] := SYSTEM.CAST(SYSTEM.LOC, utf8[2]);
+         arr4[3] := SYSTEM.CAST(SYSTEM.LOC, utf8[3]);
+         Write(arr4)
+   END;
 END WriteUtf8Buffer;
 
 
