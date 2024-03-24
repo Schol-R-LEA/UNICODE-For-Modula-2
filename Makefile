@@ -1,16 +1,16 @@
 # This is a list of all non-source files that are part of the distribution.
-AUX      := Makefile README.md LICENSE .gitignore
+AUX      = Makefile README.md LICENSE .gitignore
 
 
-CC_PATH  := $(HOME)/opt/bin
-COMPILER := $(CC_PATH)/gm2
-FLAGS    := -g -fiso
-INC      := defs
-SRC      := impls
-OBJ      := objs
-BIN      := bin
-TESTS    := tests
-BITWISE  := CardBitOps
+CC_PATH  = $(HOME)/opt/bin
+COMPILER = $(CC_PATH)/gm2
+FLAGS    = -g -fiso
+INC      = defs
+SRC      = impls
+OBJ      = objs
+BIN      = bin
+TESTS    = tests
+BITWISE  = CardBitOps
 
 testucs4repr: unicode utf8 sunitextio $(TESTS)/TestUCS4Repr.mod
 	$(COMPILER) $(FLAGS) -I$(INC)/ $(TESTS)/TestUCS4Repr.mod \

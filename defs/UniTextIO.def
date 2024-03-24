@@ -19,9 +19,9 @@ DEFINITION MODULE UniTextIO;
 
 FROM Unicode IMPORT UNICHAR, UCS4_codeunit;
 FROM UTF8 IMPORT UTF8Buffer;
-IMPORT IOChan;
+IMPORT FIO;
 
-PROCEDURE ReadUtf8Buffer(cid: IOChan.ChanId; VAR utf8: UTF8Buffer);
-PROCEDURE WriteUtf8Buffer(cid: IOChan.ChanId; utf8: UTF8Buffer);
+PROCEDURE ReadUtf8Buffer(file: FIO.File; VAR utf8: UTF8Buffer);
+PROCEDURE WriteUtf8Buffer(file: FIO.File; utf8: UTF8Buffer);
 
 END UniTextIO.

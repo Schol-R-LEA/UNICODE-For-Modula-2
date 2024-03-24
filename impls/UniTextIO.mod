@@ -17,68 +17,58 @@ Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA. *)
 
 IMPLEMENTATION MODULE UniTextIO ;
 
-IMPORT IOChan;
-IMPORT SYSTEM;
-FROM RawIO IMPORT Read, Write;
-FROM UTF8 IMPORT UTF8Buffer, BufferByteCount, BufferSize;
+IMPORT FIO, Storage, SYSTEM;
+FROM UTF8 IMPORT Octet, UTF8Buffer, BufferByteCount, BufferSize;
 
+
+PROCEDURE ReadUtf8Buffer(file: FIO.File; VAR utf8: UTF8Buffer);
 VAR
-   arr1: ARRAY [0..0] OF SYSTEM.LOC;
-   arr2: ARRAY [0..1] OF SYSTEM.LOC;
-   arr3: ARRAY [0..2] OF SYSTEM.LOC;
-   arr4: ARRAY [0..3] OF SYSTEM.LOC;
+   octet: POINTER TO Octet;
+   bytesRead: CARDINAL;
 
-PROCEDURE ReadUtf8Buffer(cid: IOChan.ChanId; VAR utf8: UTF8Buffer);
 BEGIN
-   Read(cid, arr1);
+   Storage.ALLOCATE(octet, SYSTEM.TSIZE(Octet));
+   bytesRead := FIO.ReadNBytes(file, 1, octet);
 
-   utf8[0] := SYSTEM.CAST(CARDINAL, arr1[0]);
+   utf8[0] := octet;
 
    CASE BufferSize(utf8) OF
       1:
          (* do nothing *) |
       2:
-         Read(cid, arr1);
-         utf8[1] := SYSTEM.CAST(CARDINAL, arr1[0]);
+         bytesRead := FIO.ReadNBytes(file, 1, octet);
+         utf8[1] := octet;
          utf8[2] := 0;
          utf8[3] := 0   |
       3:
-         Read(cid, arr2);
-         utf8[1] := SYSTEM.CAST(CARDINAL, arr2[0]);
-         utf8[2] := SYSTEM.CAST(CARDINAL, arr2[1]);
+         bytesRead := FIO.ReadNBytes(file, 1, octet);
+         utf8[1] := octet;
+         bytesRead := FIO.ReadNBytes(file, 1, octet);
+         utf8[2] := octet;
          utf8[3] := 0;  |
       4:
-         Read(cid, arr3);
-         utf8[1] := SYSTEM.CAST(CARDINAL, arr3[0]);
-         utf8[2] := SYSTEM.CAST(CARDINAL, arr3[1]);
-         utf8[3] := SYSTEM.CAST(CARDINAL, arr3[2])
+         bytesRead := FIO.ReadNBytes(file, 1, octet);
+         utf8[1] := octet;
+         bytesRead := FIO.ReadNBytes(file, 1, octet);
+         utf8[2] := octet;
+         bytesRead := FIO.ReadNBytes(file, 1, octet);
+         utf8[3] := octet;
    END;
-
+   Storage.DEALLOCATE(octet, SYSTEM.TSIZE(Octet));
 END ReadUtf8Buffer;
 
 
-PROCEDURE WriteUtf8Buffer(cid: IOChan.ChanId; utf8: UTF8Buffer);
+PROCEDURE WriteUtf8Buffer(file: FIO.File; utf8: UTF8Buffer);
+VAR
+   buffer: POINTER TO UTF8Buffer;
+   bytesWritten: CARDINAL;
+
 BEGIN
-   CASE BufferSize(utf8) OF
-      1:
-         arr1[0] := SYSTEM.CAST(SYSTEM.LOC, utf8[0]);
-         Write(cid, arr1)  |
-      2:
-         arr2[0] := SYSTEM.CAST(SYSTEM.LOC, utf8[0]);
-         arr2[1] := SYSTEM.CAST(SYSTEM.LOC, utf8[1]);
-         Write(cid, arr2)  |
-      3:
-         arr3[0] := SYSTEM.CAST(SYSTEM.LOC, utf8[0]);
-         arr3[1] := SYSTEM.CAST(SYSTEM.LOC, utf8[1]);
-         arr3[2] := SYSTEM.CAST(SYSTEM.LOC, utf8[2]);
-         Write(cid, arr3)  |
-      4:
-         arr4[0] := SYSTEM.CAST(SYSTEM.LOC, utf8[0]);
-         arr4[1] := SYSTEM.CAST(SYSTEM.LOC, utf8[1]);
-         arr4[2] := SYSTEM.CAST(SYSTEM.LOC, utf8[2]);
-         arr4[3] := SYSTEM.CAST(SYSTEM.LOC, utf8[3]);
-         Write(cid, arr4)
-   END;
+   Storage.ALLOCATE(buffer, SYSTEM.TSIZE(UTF8Buffer));
+
+   buffer^ := utf8;
+   bytesWritten := FIO.WriteNBytes(file, BufferSize(utf8), buffer);
+   Storage.DEALLOCATE(buffer, SYSTEM.TSIZE(UTF8Buffer));
 END WriteUtf8Buffer;
 
 END UniTextIO.
