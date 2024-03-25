@@ -83,9 +83,9 @@ PROCEDURE CharToUNICHAR (c: CHAR): UNICHAR;
 *)
 BEGIN
   RETURN ORD(c);
-  (* you get whatever char is on the system. good luck. 
-     All codepoints in the range 0 to 255 are valid Unicode characters, 
-     so the result is always valid, just underdefined and system dependent. 
+  (* you get whatever char is on the system. good luck.
+     All codepoints in the range 0 to 255 are valid Unicode characters,
+     so the result is always valid, just underdefined and system dependent.
      Moral: do not use char for real text processing.
    *)
 END CharToUNICHAR;
@@ -166,8 +166,8 @@ END IsSurrogate;
 PROCEDURE BMPToUNICHAR (b: UCS4_codeunit): UNICHAR;
 (*
    BMPToUNICHAR -    converts a single UCS4_codepoint within the BMP, b,
-                   into a Unicode character. If b is not in the BMP 
-                   but is a low high surrogate, the Unicode character 
+                   into a Unicode character. If b is not in the BMP
+                   but is a low high surrogate, the Unicode character
                    'REPLACEMENT CHARACTER' is returned.
 *)
 BEGIN

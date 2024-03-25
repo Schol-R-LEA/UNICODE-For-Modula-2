@@ -33,7 +33,7 @@ DEFINITION MODULE Unicode ;
 
 CONST
    MaxUnicode = 10FFFFH;  (*maximum Unicode value *)
-   Replacement = 0FFFDH;      (* Unicode REPLACEMENT CHARACTER *)
+   Replacement = 0FFFDH;  (* Unicode REPLACEMENT CHARACTER *)
 
 TYPE
     UNICHAR = CARDINAL [0 .. MaxUnicode];   (* a single Unicode character *)
