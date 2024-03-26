@@ -21,10 +21,10 @@ FROM Unicode IMPORT UNICHAR, UCS4_codeunit;
 
 TYPE
    BufferByteCount = CARDINAL [1 .. 4];
-   BitPosition = CARDINAL [3..7];
+   BitPosition = CARDINAL [0..7];
    Octet = CARDINAL [0 .. 0FFH];
    UTF8Buffer = ARRAY [0..3] OF Octet;
-
+   UnicharStatus = (Valid, OutOfOrder, Invalid);
 
 PROCEDURE GetEdgeBit(b: Octet): BitPosition;
 PROCEDURE GetSubChar(b: Octet): Octet;
@@ -35,14 +35,14 @@ PROCEDURE BufferSize(utf8: UTF8Buffer): BufferByteCount;
    BufferSize - get the effective size of the UTF-8 character in bytes.
 *)
 
-PROCEDURE Utf8ToUnichar(utf8: UTF8Buffer; VAR ch: UNICHAR);
+PROCEDURE Utf8ToUnichar(utf8: UTF8Buffer; VAR ch: UNICHAR): UnicharStatus;
 (*
    Utf8ToUnichar - Convert a buffer of UTF-8 charatcers
                    to the internal UCS-4 format.
 *)
 
 
-PROCEDURE UnicharToUtf8(ch: UNICHAR; VAR utf8: UTF8Buffer);
+PROCEDURE UnicharToUtf8(ch: UNICHAR; VAR utf8: UTF8Buffer): UnicharStatus;
 (*
    UnicharToUtf8 - Convert the internal UCS-4 characters to
                    a buffer of UTF-8 characters.

@@ -23,52 +23,43 @@ FROM UTF8 IMPORT Octet, UTF8Buffer, BufferByteCount, BufferSize;
 
 PROCEDURE ReadUtf8Buffer(file: FIO.File; VAR utf8: UTF8Buffer);
 VAR
-   octet: POINTER TO Octet;
-   bytesRead: CARDINAL;
+  octet: CHAR;
+  bytesRead: CARDINAL;
 
 BEGIN
-   Storage.ALLOCATE(octet, SYSTEM.TSIZE(Octet));
-   bytesRead := FIO.ReadNBytes(file, 1, octet);
+  utf8[0] := ORD(FIO.ReadChar(file));
 
-   utf8[0] := octet;
-
-   CASE BufferSize(utf8) OF
-      1:
-         (* do nothing *) |
-      2:
-         bytesRead := FIO.ReadNBytes(file, 1, octet);
-         utf8[1] := octet;
-         utf8[2] := 0;
-         utf8[3] := 0   |
-      3:
-         bytesRead := FIO.ReadNBytes(file, 1, octet);
-         utf8[1] := octet;
-         bytesRead := FIO.ReadNBytes(file, 1, octet);
-         utf8[2] := octet;
-         utf8[3] := 0;  |
-      4:
-         bytesRead := FIO.ReadNBytes(file, 1, octet);
-         utf8[1] := octet;
-         bytesRead := FIO.ReadNBytes(file, 1, octet);
-         utf8[2] := octet;
-         bytesRead := FIO.ReadNBytes(file, 1, octet);
-         utf8[3] := octet;
+  CASE BufferSize(utf8) OF
+    1:
+      (* do nothing *) |
+    2:
+      utf8[1] := ORD(FIO.ReadChar(file));
+      utf8[2] := 0;
+      utf8[3] := 0  |
+    3:
+      utf8[1] := ORD(FIO.ReadChar(file));
+      utf8[2] := ORD(FIO.ReadChar(file));
+      utf8[3] := 0  |
+    4:
+    utf8[1] := ORD(FIO.ReadChar(file));
+    utf8[2] := ORD(FIO.ReadChar(file));
+    utf8[3] := ORD(FIO.ReadChar(file))
    END;
-   Storage.DEALLOCATE(octet, SYSTEM.TSIZE(Octet));
 END ReadUtf8Buffer;
 
 
 PROCEDURE WriteUtf8Buffer(file: FIO.File; utf8: UTF8Buffer);
 VAR
-   buffer: POINTER TO UTF8Buffer;
-   bytesWritten: CARDINAL;
+  octet: CHAR;
+  size: BufferByteCount;
+  i: CARDINAL;
 
 BEGIN
-   Storage.ALLOCATE(buffer, SYSTEM.TSIZE(UTF8Buffer));
+  size := BufferSize(utf8);
 
-   buffer^ := utf8;
-   bytesWritten := FIO.WriteNBytes(file, BufferSize(utf8), buffer);
-   Storage.DEALLOCATE(buffer, SYSTEM.TSIZE(UTF8Buffer));
+  FOR i := 0 TO size-1 DO
+    FIO.WriteChar(file, CHR(utf8[i]));
+  END;
 END WriteUtf8Buffer;
 
 END UniTextIO.

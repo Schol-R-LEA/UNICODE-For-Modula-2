@@ -23,7 +23,8 @@ FROM Unicode IMPORT UNICHAR, UCS4_codeunit, IsUnicode, MaxUnicode,
 
 FROM STextIO IMPORT WriteChar, WriteString, WriteLn;
 FROM SWholeIO IMPORT WriteCard;
-FROM UTF8 IMPORT BufferSize, BufferByteCount, UTF8Buffer, Octet,
+FROM UTF8 IMPORT UnicharStatus, BufferSize, BufferByteCount,
+                 UTF8Buffer, Octet,
                  UnicharToUtf8, Utf8ToUnichar, BitPosition,
                  GetEdgeBit, GetSubChar;
 
@@ -35,14 +36,38 @@ VAR
   utf8: UTF8Buffer;
   buffer: ARRAY [0..31] OF CHAR;
   octet: Octet;
+  inStatus, outStatus: UnicharStatus;
+
+
+PROCEDURE WriteUtf8Bytes(utf8: UTF8Buffer);
+BEGIN
+  WriteCard(utf8[3], 3); WriteChar(' ');
+  WriteCard(utf8[2], 3); WriteChar(' ');
+  WriteCard(utf8[1], 3); WriteChar(' ');
+  WriteCard(utf8[0], 3);
+END WriteUtf8Bytes;
+
 
 BEGIN
   passes := 0;
   fails := 0;
 
-  FOR index := 0 TO 200 DO
+  FOR index := 0 TO MaxUnicode DO
     ucs4 := CodepointToUNICHAR(index);
-    UnicharToUtf8(ucs4, utf8);
+    inStatus := UnicharToUtf8(ucs4, utf8);
+    CASE inStatus OF
+      Valid:
+        INC(passes); |
+      Invalid:
+        WriteCard(index, 7);
+        WriteString(": Codepoint ");
+        CodepointToString(ucs4, buffer);
+        WriteString(buffer);
+        WriteString(" is not a valid UCS4 character.");
+        WriteLn;
+        INC(fails);
+    END;
+
     bytesComputed := BufferSize(utf8);
     IF bytesComputed > 4 THEN
       WriteCard(index, 7);
@@ -53,7 +78,24 @@ BEGIN
       WriteLn;
       INC(fails);
     END;
-    Utf8ToUnichar(utf8, recurse);
+    outStatus := Utf8ToUnichar(utf8, recurse);
+    CASE inStatus OF
+      Valid:
+        INC(passes); |
+      OutOfOrder:
+        WriteCard(index, 7);
+        WriteString(": Codepoint ");
+        CodepointToString(ucs4, buffer);
+        WriteString(buffer);
+        WriteString(" is not a valid UCS4 character.");
+        WriteLn;
+        INC(fails) |
+      Invalid:
+        WriteCard(index, 7);
+        WriteString(" is not a valid UTF-8 character.");
+        WriteLn;
+        INC(fails)
+    END;
 
     CASE index OF
       0 .. 07FH:
@@ -79,17 +121,8 @@ BEGIN
       WriteCard(bytes, 1);
       WriteString(". Edge bit = ");
       WriteCard(GetEdgeBit(utf8[0]), 1);
-      WriteString(". sub-chars = ");
-      WriteCard(GetSubChar(utf8[0]), 3); WriteChar(' ');
-      WriteCard(GetSubChar(utf8[1]), 3); WriteChar(' ');
-      WriteCard(GetSubChar(utf8[2]), 3); WriteChar(' ');
-      WriteCard(GetSubChar(utf8[3]), 3);
       WriteString(". Elements are: ");
-
-      WriteCard(utf8[0], 3); WriteChar(' ');
-      WriteCard(utf8[1], 3); WriteChar(' ');
-      WriteCard(utf8[2], 3); WriteChar(' ');
-      WriteCard(utf8[3], 3);
+      WriteUtf8Bytes(utf8);
       WriteLn;
       INC(fails)
     END;
@@ -104,16 +137,8 @@ BEGIN
       WriteString(" # ");
       CodepointToString(recurse, buffer);
       WriteString(buffer);
-      WriteString(". sub-chars = ");
-      WriteCard(GetSubChar(utf8[0]), 3); WriteChar(' ');
-      WriteCard(GetSubChar(utf8[1]), 3); WriteChar(' ');
-      WriteCard(GetSubChar(utf8[2]), 3); WriteChar(' ');
-      WriteCard(GetSubChar(utf8[3]), 3);
       WriteString(". Elements are: ");
-      WriteCard(utf8[0], 3); WriteChar(' ');
-      WriteCard(utf8[1], 3); WriteChar(' ');
-      WriteCard(utf8[2], 3); WriteChar(' ');
-      WriteCard(utf8[3], 3);
+      WriteUtf8Bytes(utf8);
       WriteLn;
       INC(fails);
     END;

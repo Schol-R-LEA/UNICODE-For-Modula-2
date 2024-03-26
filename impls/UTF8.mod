@@ -24,8 +24,8 @@ FROM CardBitOps IMPORT bit, SetBit, ClearBit,
                        ClearLSBtoN, ClearMSBtoN;
 
 CONST
-  extMask = 0C0H;
-
+  extMask = 080H;
+  subCharOffset = 6;
 
 VAR
   firstByteMasks: ARRAY [1 .. 3] OF Octet;
@@ -50,7 +50,7 @@ VAR
 
 BEGIN
   temp := b;
-  ClearMSBtoN(temp, 5);
+  ClearMSBtoN(temp, 6);
   RETURN temp;
 END GetSubChar;
 
@@ -79,7 +79,7 @@ BEGIN
 END BufferSize;
 
 
-PROCEDURE Utf8ToUnichar(utf8: UTF8Buffer; VAR ch: UNICHAR);
+PROCEDURE Utf8ToUnichar(utf8: UTF8Buffer; VAR ch: UNICHAR): UnicharStatus;
 (*
   Utf8ToUnichar - Convert a buffer of UTF-8 characters
                to the internal UCS-4 format.
@@ -89,18 +89,20 @@ PROCEDURE Utf8ToUnichar(utf8: UTF8Buffer; VAR ch: UNICHAR);
 
    Char. number range  |        UTF-8 octet sequence
       (hexadecimal)    |              (binary)
-   --------------------+---------------------------------------------
+   --------------------+-----------------------------------------------------
    0000 0000-0000 007F | 0xxxxxxx
    0000 0080-0000 07FF | 110xxxxx 10xxxxxx
    0000 0800-0000 FFFF | 1110xxxx 10xxxxxx 10xxxxxx
    0001 0000-0010 FFFF | 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+   0020 0000-03FF FFFF | 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+   0400 0000-7FFF FFFF | 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
 
    Any candidate character which does not match these cases should be
    replaced with the REPLACEMENT CHAR.
 *)
 
 VAR
-  edgeBit: CARDINAL;
+  edgeBit: BitPosition;
   subChar: UTF8Buffer;    (* holds the sub-components of the character *)
   index, component : CARDINAL;
 
@@ -109,6 +111,7 @@ BEGIN
   (* clear the output *)
   ch := 0;
 
+  (* get the character part of each of the higher bytes *)
   subChar[0] := 0;
   FOR index := 1 TO 3 DO
     subChar[index] := GetSubChar(utf8[index]);
@@ -117,36 +120,72 @@ BEGIN
 
   (* Which is the last clear bit in the first byte? *)
   edgeBit := GetEdgeBit(utf8[0]);
-  ch := utf8[0];
 
   CASE edgeBit OF
     7:
-      (* A single-byte ASCII char, just use as-is *) |
+      (* A single-byte ASCII char, just use as-is *)
+      ch := utf8[0] |
+
+    6:
+      (* A byte value which is out of order,
+         set ch to REPLACEMENT CHAR and return an error *)
+        ch := Replacement;
+        RETURN OutOfOrder |
+
     5:
       (* use two bytes for the value *)
-      ClearMSBtoN(ch, 6);
-      ch := bwOr(ch, 080H);
-      ch := bwOr(ch, shl(subChar[1], 8)) |
+      (* start by getting the character part of the first byte
+         by getting the 1-byte inverse of the byte mask and
+         masking it off the character part, which is then
+         shifted it by 6.
+         *)
+      component := bwNot(firstByteMasks[1]);
+      ClearMSBtoN(component, 8);
+      ch := shl(bwAnd(utf8[0], component), subCharOffset);
+
+      (* mask in the character part of the remaining bytes *)
+      ch := bwOr(ch, subChar[1]) |
+
     4:
       (* use three bytes for the value *)
-      ClearMSBtoN(ch, 5);
-      ch := bwOr(ch, 080H);
-      ch := bwOr(ch, shl(subChar[1], 8));
-      ch := bwOr(ch, shl(subChar[2], 16)) |
+      (* start by getting the character part of the first byte
+         by getting the 1-byte inverse of the byte mask and
+         masking it off the character part, which is then
+         shifted it by an offset.
+         *)
+      component := bwNot(firstByteMasks[2]);
+      ClearMSBtoN(component, 8);
+      ch := shl(bwAnd(utf8[0], component), subCharOffset * 2);
+
+      (* mask in the character part of the remaining bytes *)
+      ch := bwOr(ch, shl(subChar[1], subCharOffset));
+      ch := bwOr(ch, subChar[2]) |
     3:
       (* use four bytes for the value *)
-      ClearMSBtoN(ch, 4);
-      ch := bwOr(ch, shl(subChar[1], 4));
-      ch := bwOr(ch, shl(subChar[2], 12));
-      ch := bwOr(ch, shl(subChar[3], 20)) |
+      (* start by getting the character part of the first byte
+      by getting the 1-byte inverse of the byte mask and
+      masking it off the character part, which is then
+      shifted it by an offset.
+      *)
+      component := bwNot(firstByteMasks[3]);
+      ClearMSBtoN(component, 8);
+      ch := shl(bwAnd(utf8[0], component), subCharOffset * 3);
+
+      (* mask in the character part of the remaining bytes *)
+      ch := bwOr(ch, shl(subChar[1], subCharOffset * 2));
+      ch := bwOr(ch, shl(subChar[2], subCharOffset));
+      ch := bwOr(ch, subChar[3])
+ |
   ELSE
-    (* should never happen, return the REPLACEMENT CHAR *)
+    (* byte stream was corrupted, return the REPLACEMENT CHAR *)
     ch := Replacement;
+    RETURN Invalid;
   END;
+  RETURN Valid;
 END Utf8ToUnichar;
 
 
-PROCEDURE UnicharToUtf8(ch: UNICHAR; VAR utf8: UTF8Buffer);
+PROCEDURE UnicharToUtf8(ch: UNICHAR; VAR utf8: UTF8Buffer): UnicharStatus;
 (*
    UnicharToUtf8 - Convert the internal UCS-4 characters to
                    a buffer of UTF-8 characters.
@@ -161,42 +200,30 @@ BEGIN
     utf8[index] := 0
   END;
 
-  component := ch;  (* initialize the first byte *)
-  ClearMSBtoN(component, 8);
-  utf8[0] := component;
 
   CASE ch OF
     0 .. 07FH:
-      (* no change *) |
+      (* initialize the first character *)
+      utf8[0] := ch |
+
     080H .. 07FFH:
-      ClearMSBtoN(utf8[0], 6);
-      component := shr(ch, 8);
-      ClearMSBtoN(component, 8);
-      utf8[0] := bwOr(utf8[0], firstByteMasks[1]);
-      utf8[1] := bwOr(component, extMask) |
+      utf8[0] := bwOr(bwAnd(shr(ch, subCharOffset), 03FH), firstByteMasks[1]);
+      utf8[1] := bwOr(bwAnd(ch, 03FH), extMask) |
+
     0800H .. 00FFFFH:
-      ClearMSBtoN(utf8[0], 5);
-      component := shr(ch, 8);
-      ClearMSBtoN(component, 8);
-      utf8[0] := bwOr(utf8[0], firstByteMasks[2]);
-      utf8[1] := bwOr(component, extMask);
-      component := shr(ch, 16);
-      ClearMSBtoN(component, 8);
-      utf8[2] := bwOr(component, extMask) |
+      utf8[0] := bwOr(bwAnd(shr(ch, subCharOffset * 2), 03FH), firstByteMasks[2]);
+      utf8[1] := bwOr(bwAnd(shr(ch, subCharOffset), 03FH), extMask);
+      utf8[2] := bwOr(bwAnd(ch, 03FH), extMask) |
+
     010000H .. 010FFFFH:
-      ClearMSBtoN(utf8[0], 3);
-      component := shr(ch, 3);
-      ClearMSBtoN(component, 8);
-      utf8[0] := bwOr(utf8[0], firstByteMasks[3]);
-      utf8[1] := bwOr(component, extMask);
-      component := shr(ch, 13);
-      ClearMSBtoN(component, 8);
-      utf8[2] := bwOr(component, extMask);
-      ClearMSBtoN(component, 12);
-      utf8[2] := bwOr(component, extMask) |
+      utf8[0] := bwOr(bwAnd(shr(ch, subCharOffset*3), 03FH), firstByteMasks[3]);
+      utf8[1] := bwOr(bwAnd(shr(ch, subCharOffset * 2), 03FH), extMask);
+      utf8[2] := bwOr(bwAnd(shr(ch, subCharOffset), 03FH), extMask);
+      utf8[3] := bwOr(bwAnd(ch, 03FH), extMask) |
  ELSE
-   (* TODO *)
+   RETURN Invalid;
  END;
+ RETURN Valid;
 END UnicharToUtf8;
 
 BEGIN
