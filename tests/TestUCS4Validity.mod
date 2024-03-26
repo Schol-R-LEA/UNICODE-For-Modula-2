@@ -46,11 +46,13 @@ PROCEDURE TestUnicharValidity(tf: TestFrame; i: CARDINAL);
 VAR
   convert: UNICHAR;
   buffer: ARRAY [0..31] OF CHAR;
+  replaced: BOOLEAN;
 
 BEGIN
   CodepointToString(tf.uc, buffer);
+  replaced := (tf.uc = Replacement);
 
-  IF (IsUnicode(tf.uc) = tf.valid) AND (tf.uc # Replacement) THEN
+  IF (IsUnicode(tf.uc) = tf.valid) OR replaced THEN
     INC(passes);
   ELSE
     WriteCard(i, 2);
@@ -64,7 +66,7 @@ BEGIN
     WriteLn;
     INC(fails);
   END;
-  IF (IsBMP(tf.uc) = tf.bmp) AND (tf.uc # Replacement) THEN
+  IF (IsBMP(tf.uc) = tf.bmp) OR replaced THEN
     INC(passes);
   ELSE
     WriteCard(i, 2);

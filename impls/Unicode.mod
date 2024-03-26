@@ -72,6 +72,7 @@ BEGIN
    RETURN uc <= MaxUnicode;
 END IsUnicode;
 
+
 PROCEDURE CharToUNICHAR (c: CHAR): UNICHAR;
 (*
    CharToUNICHAR -   converts a single char, c, into a Unicode character.
@@ -89,6 +90,7 @@ BEGIN
      Moral: do not use char for real text processing.
    *)
 END CharToUNICHAR;
+
 
 PROCEDURE ASCIIToUNICHAR (a: CHAR): UNICHAR;
 (*
@@ -177,6 +179,7 @@ BEGIN
       RETURN Replacement;
    END;
 END BMPToUNICHAR;
+
 
 PROCEDURE SurrogatesToUNICHAR (low, high: UCS4_codeunit): UNICHAR;
 (*
