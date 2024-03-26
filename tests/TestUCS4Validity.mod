@@ -44,7 +44,6 @@ VAR
 
 PROCEDURE TestUnicharValidity(tf: TestFrame; i: CARDINAL);
 VAR
-  convert: UNICHAR;
   buffer: ARRAY [0..31] OF CHAR;
   replaced: BOOLEAN;
 

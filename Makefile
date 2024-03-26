@@ -12,11 +12,13 @@ BIN      = bin
 TESTS    = tests
 BITWISE  = CardBitOps
 
+
 testutf8console: unicode utf8 sunitextio $(TESTS)/TestUTF8Console.mod
 	$(COMPILER) $(FLAGS) -I$(INC)/ $(TESTS)/TestUTF8Console.mod \
 	$(OBJ)/Unicode.o $(OBJ)/UTF8.o $(OBJ)/UniTextIO.o $(OBJ)/SUniTextIO.o \
 	$(BITWISE)/$(OBJ)/gnu/x86/CardBitOps.o \
 	-o $(BIN)/TestUTF8Console
+
 
 testutf8fileio: unicode utf8 unitextio $(TESTS)/TestUTF8FileIO.mod
 	$(COMPILER) $(FLAGS) -I$(INC)/ $(TESTS)/TestUTF8FileIO.mod \
@@ -25,9 +27,16 @@ testutf8fileio: unicode utf8 unitextio $(TESTS)/TestUTF8FileIO.mod
 	-o $(BIN)/TestUTF8FileIO
 
 
+testucs4toutf8: unicode utf8 $(TESTS)/TestUCS4ToUTF8.mod
+	$(COMPILER) $(FLAGS) -I$(INC)/ $(TESTS)/TestUCS4ToUTF8.mod \
+	$(OBJ)/Unicode.o $(OBJ)/UTF8.o \
+	$(BITWISE)/$(OBJ)/gnu/x86/CardBitOps.o \
+	-o $(BIN)/TestUCS4ToUTF8
+
+
 testucs4validity: unicode $(TESTS)/TestUTF8FileIO.mod
 	$(COMPILER) $(FLAGS) -I$(INC)/ $(TESTS)/TestUCS4Validity.mod \
-	$(OBJ)/Unicode.o $(OBJ)/UTF8.o $(OBJ)/UniTextIO.o $(OBJ)/SUniTextIO.o \
+	$(OBJ)/Unicode.o $(OBJ)/UTF8.o \
 	$(BITWISE)/$(OBJ)/gnu/x86/CardBitOps.o \
 	-o $(BIN)/TestUCS4Validity
 

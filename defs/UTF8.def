@@ -21,8 +21,13 @@ FROM Unicode IMPORT UNICHAR, UCS4_codeunit;
 
 TYPE
    BufferByteCount = CARDINAL [1 .. 4];
+   BitPosition = CARDINAL [3..7];
    Octet = CARDINAL [0 .. 0FFH];
    UTF8Buffer = ARRAY [0..3] OF Octet;
+
+
+PROCEDURE GetEdgeBit(b: Octet): BitPosition;
+PROCEDURE GetSubChar(b: Octet): Octet;
 
 
 PROCEDURE BufferSize(utf8: UTF8Buffer): BufferByteCount;
