@@ -25,50 +25,60 @@ FROM Unicode IMPORT UNICHAR, UCS4_codeunit, IsUnicode,
                     IsBMP, BMPToUNICHAR, SurrogatesToUNICHAR;
 
 
-FROM FIO IMPORT File, Open, Close;
-FROM STextIO IMPORT WriteChar, WriteString, WriteLn;
+FROM FIO IMPORT File, OpenToRead, OpenToWrite, Close;
+FROM STextIO IMPORT WriteString, WriteLn;
 FROM SWholeIO IMPORT WriteCard;
-FROM UTF8 IMPORT UTF8Buffer, UnicharToUtf8, Utf8ToUnichar;
+FROM UTF8 IMPORT UTF8Buffer, UnicharToUtf8, Utf8ToUnichar, UnicharStatus;
 FROM UniTextIO IMPORT ReadUtf8Buffer, WriteUtf8Buffer;
 
 
-TYPE
-  TestFrame = RECORD
-    uc: UNICHAR;
-    valid, ascii, bmp: BOOLEAN;
-  END;
-
 VAR
-  a: ARRAY [0..15] OF TestFrame;
-  passes, fails, i: CARDINAL;
-  output: File;
+  passes, fails, index: CARDINAL;
+  a: ARRAY [0..12] OF UNICHAR;
 
-PROCEDURE TestUnichar(tf: TestFrame);
+PROCEDURE TestUnichar(uc: UNICHAR);
 VAR
+  f: File;
   buffer: ARRAY [0..31] OF CHAR;
-  ubuffer: UTF8Buffer;
-  convert: UNICHAR;
+  obuffer, ibuffer: UTF8Buffer;
+  readUCS: UNICHAR;
+  status: UnicharStatus;
 
 BEGIN
-  UnicharToUtf8(uc, ubuffer);
+  status := UnicharToUtf8(uc, obuffer);
 
-  WriteUtf8Buffer(output, ubuffer);
+  f := OpenToWrite("read_write_test.txt");
+  WriteUtf8Buffer(f, obuffer);
+  Close(f);
 
-  CodepointToString(uc, buffer);
+  f := OpenToRead("read_write_test.txt");
+  ReadUtf8Buffer(f, ibuffer);
+  Close(f);
 
+  status := Utf8ToUnichar(ibuffer, readUCS);
 
+  IF status = Valid THEN
+    INC(passes);
+  ELSE
+    WriteCard(index, 7);
+    WriteString(": Read value is not a valid USC-4 codepoint.");
+    WriteLn;
+    INC(fails);
+  END;
 
-   TestIsASCII(uc);
-   TestIsBMP(uc);
-
-   WriteString(" -> ");
-   Utf8ToUnichar(ubuffer, convert);
-   WriteCard(convert, 1);
-   WriteString(" -> ");
-   WriteChar("'");
-   UnicharToUtf8(convert, ubuffer);
-   WriteUtf8Buffer(ubuffer);
-   WriteString("' ");
+  IF uc = readUCS THEN
+    INC(passes);
+  ELSE
+    WriteCard(index, 7);
+    WriteString(": Codepoint ");
+    CodepointToString(uc, buffer);
+    WriteString(buffer);
+    WriteString(" # ");
+    CodepointToString(readUCS, buffer);
+    WriteString(buffer);
+    WriteLn;
+    INC(fails);
+  END;
 
 END TestUnichar;
 
@@ -77,71 +87,26 @@ END TestUnichar;
 BEGIN
    passes := 0;
    fails := 0;
-   Open(output);
 
-   a[0].uc := CharToUNICHAR('a');         (* a CHAR which is a BMP codepoint *)
-   a[0].valid := TRUE;
-   a[0].bmp := TRUE;
-   a[0].ascii := TRUE;
+   a[0] := CharToUNICHAR('a');         (* a CHAR which is a BMP codepoint *)
+   a[1] := ASCIIToUNICHAR('a');        (* an ASCII char which is a BMP codepoint *)
+   a[2] := CodepointToUNICHAR(ORD('a'));
+   a[3] := CodepointToUNICHAR(120H);  (* a non-ASCII char which is a BMP codepoint *)
+   a[4] := BMPToUNICHAR(0C1H);           (* a non-ASCII char which is a BMP codepoint *)
+   a[5] := CodepointToUNICHAR(0C1H);  (* a non-ASCII char which is a BMP codepoint *)
+   a[6] := BMPToUNICHAR(0141H);   (* a non-ASCII char which is a BMP codepoint *)
+   a[7] := BMPToUNICHAR(10401H);  (* a non-ASCII char which is not a BMP codepoint *)
+   a[8] := CodepointToUNICHAR(10401H);  (* a non-ASCII char which is not a BMP codepoint *)
+   a[9] := SurrogatesToUNICHAR(0DC01H, 0D801H);  (* a non-ASCII char which is not a BMP codepoint *)
+   a[10] := CodepointToUNICHAR(0FFFFFFFFH);  (* an invalid codepoint, should return REPLACEMENT CHAR *)
+   a[11] := CodepointToUNICHAR(21H);  (* an invalid codepoint, should return REPLACEMENT CHAR *)
+   a[12] := CodepointToUNICHAR(0E18H);  (* a non-ASCII char which is a BMP codepoint *)
 
-   a[1].uc := ASCIIToUNICHAR('a');        (* an ASCII char which is a BMP codepoint *)
-   a[1].valid := TRUE;
-   a[1].bmp := TRUE;
-   a[1].ascii := TRUE;
 
-   a[2].uc := CodepointToUNICHAR(ORD('a'));
-   a[2].valid := TRUE;
-   a[2].bmp := TRUE;
-   a[2].ascii := TRUE;
-
-   a[3].uc := CodepointToUNICHAR(120H);  (* a non-ASCII char which is a BMP codepoint *)
-   a[3].valid := TRUE;
-   a[3].bmp := TRUE;
-   a[3].ascii := FALSE;
-
-   a[4].uc := BMPToUNICHAR(0C1H);           (* a non-ASCII char which is a BMP codepoint *)
-   a[4].valid := TRUE;
-   a[4].bmp := TRUE;
-   a[4].ascii := FALSE;
-
-   a[5].uc := CodepointToUNICHAR(0C1H);  (* a non-ASCII char which is a BMP codepoint *)
-   a[5].valid := TRUE;
-   a[5].bmp := TRUE;
-   a[5].ascii := FALSE;
-
-   a[6].uc := BMPToUNICHAR(0141H);           (* a non-ASCII char which is a BMP codepoint *)
-   a[6].valid := TRUE;
-   a[6].bmp := TRUE;
-   a[6].ascii := FALSE;
-
-   a[7].uc := BMPToUNICHAR(10401H);  (* a non-ASCII char which is not a BMP codepoint *)
-   a[7].valid := TRUE;
-   a[7].bmp := FALSE;
-   a[7].ascii := FALSE;
-
-   a[8].uc := CodepointToUNICHAR(10401H);  (* a non-ASCII char which is not a BMP codepoint *)
-   a[8].valid := TRUE;
-   a[8].bmp := FALSE;
-   a[8].ascii := FALSE;
-
-   a[9].uc := SurrogatesToUNICHAR(0DC01H, 0D801H);  (* a non-ASCII char which is not a BMP codepoint *)
-   a[9].valid := TRUE;
-   a[9].bmp := FALSE;
-   a[9].ascii := FALSE;
-
-   a[10].uc := CodepointToUNICHAR(0FFFFFFFFH);  (* an invalid codepoint, should return REPLACEMENT CHAR *)
-   a[10].valid := FALSE;
-   a[10].bmp := FALSE;
-   a[10].ascii := FALSE;
-
-   a[11].uc := CodepointToUNICHAR(21H);  (* an invalid codepoint, should return REPLACEMENT CHAR *)
-   a[11].valid := FALSE;
-   a[11].bmp := FALSE;
-   a[11].ascii := FALSE;
-
-   FOR i := 0 TO 15 DO
-      TestUnichar(a[i]);
+   FOR index := 0 TO 12 DO
+      TestUnichar(a[index]);
    END;
+
 
    WriteString("Passes: ");
    WriteCard(passes, 2);
