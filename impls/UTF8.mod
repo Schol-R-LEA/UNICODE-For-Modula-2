@@ -25,6 +25,7 @@ FROM CardBitOps IMPORT bit, SetBit, ClearBit,
 
 CONST
   extMask = 080H;
+  lowBitsMask = 03FH;
   subCharOffset = 6;
 
 VAR
@@ -94,8 +95,6 @@ PROCEDURE Utf8ToUnichar(utf8: UTF8Buffer; VAR ch: UNICHAR): UnicharStatus;
    0000 0080-0000 07FF | 110xxxxx 10xxxxxx
    0000 0800-0000 FFFF | 1110xxxx 10xxxxxx 10xxxxxx
    0001 0000-0010 FFFF | 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-   0020 0000-03FF FFFF | 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
-   0400 0000-7FFF FFFF | 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
 
    Any candidate character which does not match these cases should be
    replaced with the REPLACEMENT CHAR.
@@ -207,19 +206,19 @@ BEGIN
       utf8[0] := ch |
 
     080H .. 07FFH:
-      utf8[0] := bwOr(bwAnd(shr(ch, subCharOffset), 03FH), firstByteMasks[1]);
-      utf8[1] := bwOr(bwAnd(ch, 03FH), extMask) |
+      utf8[0] := bwOr(bwAnd(shr(ch, subCharOffset), lowBitsMask), firstByteMasks[1]);
+      utf8[1] := bwOr(bwAnd(ch, lowBitsMask), extMask) |
 
     0800H .. 00FFFFH:
-      utf8[0] := bwOr(bwAnd(shr(ch, subCharOffset * 2), 03FH), firstByteMasks[2]);
-      utf8[1] := bwOr(bwAnd(shr(ch, subCharOffset), 03FH), extMask);
-      utf8[2] := bwOr(bwAnd(ch, 03FH), extMask) |
+      utf8[0] := bwOr(bwAnd(shr(ch, subCharOffset * 2), lowBitsMask), firstByteMasks[2]);
+      utf8[1] := bwOr(bwAnd(shr(ch, subCharOffset), lowBitsMask), extMask);
+      utf8[2] := bwOr(bwAnd(ch, lowBitsMask), extMask) |
 
     010000H .. 010FFFFH:
-      utf8[0] := bwOr(bwAnd(shr(ch, subCharOffset*3), 03FH), firstByteMasks[3]);
-      utf8[1] := bwOr(bwAnd(shr(ch, subCharOffset * 2), 03FH), extMask);
-      utf8[2] := bwOr(bwAnd(shr(ch, subCharOffset), 03FH), extMask);
-      utf8[3] := bwOr(bwAnd(ch, 03FH), extMask) |
+      utf8[0] := bwOr(bwAnd(shr(ch, subCharOffset*3), lowBitsMask), firstByteMasks[3]);
+      utf8[1] := bwOr(bwAnd(shr(ch, subCharOffset * 2), lowBitsMask), extMask);
+      utf8[2] := bwOr(bwAnd(shr(ch, subCharOffset), lowBitsMask), extMask);
+      utf8[3] := bwOr(bwAnd(ch, lowBitsMask), extMask) |
  ELSE
    RETURN Invalid;
  END;
